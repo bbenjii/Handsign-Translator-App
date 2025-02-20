@@ -1,6 +1,6 @@
 Directory for Android Studio code
 
-# Installation Guide for Android Studio
+# Installation Guide through Android Studio
 
 ## Step 1: Connect GitHub to Android Studio
 1. Open **Android Studio**.
