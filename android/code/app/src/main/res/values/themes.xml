@@ -3,6 +3,12 @@
     <style name="Base.Theme.Handsign_translator_app" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<!--        <item name="colorPrimary">@color/blue_gray_500</item>-->
+<!--        <item name="colorPrimaryVariant">@color/blue_gray_700</item>-->
+<!--        <item name="colorSecondary">@color/blue_gray_200</item>-->
+
+<!--        <item name="colorOnPrimary">@color/white</item>-->
+<!--        <item name="colorOnSecondary">@color/white</item>-->
     </style>
 
     <style name="Theme.Handsign_translator_app" parent="Base.Theme.Handsign_translator_app" />

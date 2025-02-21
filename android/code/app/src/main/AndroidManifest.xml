@@ -13,6 +13,12 @@
         android:theme="@style/Theme.Handsign_translator_app"
         tools:targetApi="31">
         <activity
+            android:name=".GesturesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SettingActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

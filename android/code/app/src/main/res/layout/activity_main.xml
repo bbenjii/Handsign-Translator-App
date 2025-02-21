@@ -11,7 +11,7 @@
 
     <!-- Header Section -->
     <LinearLayout
-        android:id="@+id/linearLayoutHeader"
+        android:id="@+id/header_layout"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginHorizontal="16dp"
@@ -23,7 +23,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/title_translate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -32,26 +32,26 @@
             android:textStyle="bold"/>
 
         <ImageButton
-            android:id="@+id/imageButton9"
+            android:id="@+id/button_history"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackground"
             app:srcCompat="@drawable/history_icon"
-            android:contentDescription="History"/>
+            android:contentDescription="History Button"/>
 
         <ImageButton
-            android:id="@+id/imageButton8"
+            android:id="@+id/button_more_options"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackground"
             android:rotation="90"
             app:srcCompat="@drawable/more_options"
-            android:contentDescription="More options"/>
+            android:contentDescription="More Options Button"/>
     </LinearLayout>
 
     <!-- Hand Sign Card -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardView"
+        android:id="@+id/card_hand_sign"
         android:layout_width="0dp"
         android:layout_height="300dp"
         android:layout_marginHorizontal="16dp"
@@ -60,7 +60,7 @@
         app:cardElevation="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linearLayoutHeader">
+        app:layout_constraintTop_toBottomOf="@id/header_layout">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -69,14 +69,14 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textView7"
+                android:id="@+id/label_hand_sign"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Hand Signs"
                 android:textStyle="bold"/>
 
             <ImageView
-                android:id="@+id/imageView"
+                android:id="@+id/image_hand_sign"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
@@ -87,7 +87,7 @@
 
     <!-- Translated Text Card -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardView2"
+        android:id="@+id/card_translation"
         android:layout_width="0dp"
         android:layout_height="300dp"
         android:layout_marginHorizontal="16dp"
@@ -96,7 +96,7 @@
         app:cardElevation="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardView">
+        app:layout_constraintTop_toBottomOf="@id/card_hand_sign">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -111,7 +111,7 @@
                 android:gravity="center_vertical">
 
                 <TextView
-                    android:id="@+id/textView5"
+                    android:id="@+id/label_language"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -119,23 +119,39 @@
                     android:textStyle="bold"/>
 
                 <ImageButton
-                    android:id="@+id/imageButton6"
+                    android:id="@+id/button_speaker"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:background="?android:attr/selectableItemBackground"
                     app:srcCompat="@drawable/speaker_logo"
-                    android:contentDescription="Speaker"/>
+                    android:contentDescription="Speaker Button"/>
             </LinearLayout>
 
             <TextView
-                android:id="@+id/textView6"
+                android:id="@+id/text_translated_output"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Three"
                 android:textAlignment="viewStart"
                 android:textSize="24sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"/>
         </LinearLayout>
+
     </androidx.cardview.widget.CardView>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigationView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="#00263238"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_menu" />
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
