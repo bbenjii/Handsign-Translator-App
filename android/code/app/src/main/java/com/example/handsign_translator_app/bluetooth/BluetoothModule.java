@@ -8,7 +8,7 @@ public class BluetoothModule {
     }
 
     public int[] getGloveData() {
-        int min = 0, max = 10;
+        int min = 0, max = 30;
         int finger1_raw_data = randomNumber(min, max);
         int finger2_raw_data = randomNumber(min, max);
         int finger3_raw_data = randomNumber(min, max);
