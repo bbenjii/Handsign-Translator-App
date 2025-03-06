@@ -14,6 +14,11 @@ public class BluetoothModule {
         int finger3_raw_data = randomNumber(0, 20);
         int finger4_raw_data = randomNumber(150, 180);
         int finger5_raw_data = randomNumber(150, 180);
+//        int finger1_raw_data = randomNumber(0, 180);
+//        int finger2_raw_data = randomNumber(0, 180);
+//        int finger3_raw_data = randomNumber(0, 180);
+//        int finger4_raw_data = randomNumber(0, 180);
+//        int finger5_raw_data = randomNumber(0, 180);
 
         int[]  flexReadings = {finger1_raw_data, finger2_raw_data, finger3_raw_data, finger4_raw_data, finger5_raw_data};
 
