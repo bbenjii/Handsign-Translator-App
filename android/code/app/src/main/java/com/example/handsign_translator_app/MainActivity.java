@@ -1,7 +1,14 @@
 package com.example.handsign_translator_app;
+
+import java.io.InputStream;
 import java.util.*;
 
+import android.content.res.AssetManager;
+
+import java.io.IOException;
+
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -22,6 +29,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
+import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.ml_module.GestureDetection;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -37,7 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton buttonSpeaker;
     private ImageView imageHandSign;
     private BottomNavigationView bottomNavigationView;
-
+    private AssetManager assetManager;
+    GestureClassifier classifier;
     private BluetoothModule bluetoothModule;
     private Handler handler = new Handler();
 //    private Handler handler = new Handler(Looper.getMainLooper());
@@ -61,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
     }
 
     @Override
@@ -74,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * SetUP the Main Activity
      */
-    private void setUp(){
+    private void setUp() {
         titleTranslate = findViewById(R.id.title_translate);
 
         labelHandSign = findViewById(R.id.label_hand_sign);
@@ -97,17 +105,33 @@ public class MainActivity extends AppCompatActivity {
             if (item.getItemId() == R.id.settings) {
                 navigateToSettingsActivity();
                 return true; // Event handled
-            }
-            else if (item.getItemId() == R.id.gestures) {
+            } else if (item.getItemId() == R.id.gestures) {
                 navigateToGesturesActivity();
                 return true; // Event handled
             }
             return false; // Event not handled
         });
 
+        assetManager = getApplicationContext().getAssets();
+        classifier = new GestureClassifier(assetManager);
+
+
+        // load image
+        try {
+            // get input stream
+            InputStream ims = getAssets().open("hand_signs_images/asl_numbers/004.png");
+            // load image as Drawable
+            Drawable d = Drawable.createFromStream(ims, null);
+            // set image to ImageView
+            imageHandSign.setImageDrawable(d);
+//            imageHandSign.
+        }
+        catch(IOException ex) {
+            return;
+        }
     }
 
-    private void readGesture(){
+    private void readGesture() {
         runnable = new Runnable() {
             @Override
             public void run() {
@@ -122,12 +146,17 @@ public class MainActivity extends AppCompatActivity {
                 // Check gesture stability
                 boolean isStable = GestureDetection.isGestureStable(flexReadingsHistory);
 
-                if(isStable){
+                if (isStable) {
                     textTranslatedOutput.setText("STABLE...");
-                }
-                else {
+                    //                float[] sensorReadings = {120.0f, 0, 0, 110.0f, 90.0f};
+                    String predictedGesture = classifier.classifyGesture(convertIntArrayToFloatArray(currentFlexReadings));
+                    String gesture = ("Predicted Gesture: " + predictedGesture);
+                    textTranslatedOutput.setText(gesture);
+
+                } else {
                     textTranslatedOutput.setText("READING...");
                 }
+
 
                 handler.postDelayed(this, 500); // 0.5 seconds delay
             }
@@ -136,9 +165,19 @@ public class MainActivity extends AppCompatActivity {
         handler.post(runnable);
 
 
-
     }
 
+    public static float[] convertIntArrayToFloatArray(int[] intArray) {
+        if (intArray == null) {
+            return null;
+        }
+        float[] floatArray = new float[intArray.length];
+        for (int i = 0; i < intArray.length; i++) {
+            // Automatic widening conversion from int to float
+            floatArray[i] = intArray[i];
+        }
+        return floatArray;
+    }
 
 
     private void navigateToSettingsActivity() {
