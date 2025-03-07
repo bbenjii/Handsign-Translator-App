@@ -1,13 +1,20 @@
 package com.example.handsign_translator_app.controllers;
 
+import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
+import android.widget.Toast;
+
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
 import com.example.handsign_translator_app.models.Gesture;
 import com.example.handsign_translator_app.utils.Constants;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 
 public class GestureController {
@@ -28,6 +35,7 @@ public class GestureController {
     private GestureListener listener;
     // Stores the currently detected gesture (if any)
     public Gesture currentGesture;
+    private BluetoothSocket bluetoothSocket;
 
     /**
      * Interface definition for callbacks to be invoked when a gesture is detected or translation is in progress.
@@ -35,15 +43,17 @@ public class GestureController {
     public interface GestureListener {
         void onGestureDetected(Gesture gesture);
         void onTranslationInProgress();
+
     }
 
     /**
      * Constructor for GestureController.
      */
-    public GestureController(BluetoothModule bluetoothModule, GestureClassifier gestureClassifier, GestureListener listener) {
+    public GestureController(BluetoothModule bluetoothModule, GestureClassifier gestureClassifier, GestureListener listener, BluetoothSocket bluetoothSocket) {
         this.bluetoothModule = bluetoothModule;
         this.gestureClassifier = gestureClassifier;
         this.listener = listener;
+        this.bluetoothSocket = bluetoothSocket;
     }
 
     /**
@@ -67,7 +77,37 @@ public class GestureController {
         @Override
         public void run() {
             // Get the latest sensor readings from the Bluetooth module
-            int[] currentFlexReadings = bluetoothModule.getGloveData();
+            int[] currentFlexReadings = new int[5];
+
+//            currentFlexReadings = bluetoothModule.getGloveData();
+
+            ArrayList<String> rawData = new ArrayList<>();
+            try {
+
+//                if (bluetoothSocket == null) {
+////                    (Toast.makeText(this, "Error: Bluetooth socket not connected", Toast.LENGTH_SHORT).show());
+//                    return;
+//                }
+
+
+                InputStream inputStream = bluetoothSocket.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                String delimiter = ", ";
+                while ((line = reader.readLine()) != null) {
+                    String[] values = line.split(delimiter);
+                    for (int i = 0; i < values.length; i++) {
+                        currentFlexReadings[i] = Integer.parseInt(values[i]);
+                    }
+//                    currentFlexReadings = bluetoothModule.getGloveData();
+
+//                    processSensorData(data);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+//                runOnUiThread(() -> Toast.makeText(this, "Error reading data: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+
             // Add the new readings to the sliding window
             flexReadingsHistory.addLast(currentFlexReadings);
             // Ensure the sliding window does not exceed the specified stability window size
