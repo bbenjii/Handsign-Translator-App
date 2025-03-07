@@ -35,7 +35,8 @@ android {
 }
 
 dependencies {
-
+//    implementation 'org.tensorflow:tensorflow-lite:2.9.0'
+    implementation(libs.tensorflow.lite)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
