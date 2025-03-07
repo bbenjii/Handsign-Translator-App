@@ -3,6 +3,8 @@ package com.example.handsign_translator_app;
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 
+import com.example.handsign_translator_app.models.Gesture;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,15 +16,16 @@ import java.util.List;
 import java.util.Map;
 
 public class GestureInfoHelper {
-    public List<Map<String, String>> gestures_dataset;
+    private List<Gesture> gestures;
 
     public GestureInfoHelper(AssetManager assetManager) {
+        gestures = new ArrayList<>();
+
         String csvFile = "gesture_info.csv";
         String line;
         String delimiter = ", "; // Adjust if your CSV uses a different delimiter
 
         String[] labels = {};
-        gestures_dataset = new ArrayList<>();
         Map<String, String> map;
         try {
             // get input stream
@@ -40,28 +43,21 @@ public class GestureInfoHelper {
                 for(int i = 0;i < labels.length; i++){
                     map.put(labels[i], values[i]);
                 }
-                gestures_dataset.add(map);
+                String translation = map.get("translation").trim();
+                String imagePath = map.get("path").trim();
+                gestures.add(new Gesture(translation, imagePath));
             }
         }
-        catch(IOException ex) {
+        catch(IOException e) {
+            e.printStackTrace();
             return;
         }
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
-            line = br.readLine();
-            labels = line.split(delimiter);
+    }
 
-            while ((line = br.readLine()) != null) {
-                // Splitting the line into fields
-                String[] values = line.split(delimiter);
-                map = new HashMap<String, String>();
-                // Process each value
-                for(int i = 0;i < labels.length; i++){
-                    map.put(labels[i], values[i]);
-                }
-                gestures_dataset.add(map);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    public Gesture getGestureAt(int index) {
+        if (index >= 0 && index < gestures.size()) {
+            return gestures.get(index);
         }
+        return new Gesture("Unknown Gesture", "default_image.png");
     }
 }

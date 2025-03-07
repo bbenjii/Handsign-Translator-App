@@ -10,18 +10,13 @@ import java.io.IOException;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.os.Handler;
 import android.speech.tts.TextToSpeech;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,17 +24,16 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.fragment.NavHostFragment;
 
 
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
+import com.example.handsign_translator_app.controllers.GestureController;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
-import com.example.handsign_translator_app.ml_module.GestureDetection;
+import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
+import com.example.handsign_translator_app.models.Gesture;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-public class MainActivity extends AppCompatActivity  implements TextToSpeech.OnInitListener{
-    private final int STABILITY_WINDOW = 10; // Number of readings to track for stability
+public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener, GestureController.GestureListener {
 
     private TextView titleTranslate;
     private TextView labelHandSign;
@@ -51,19 +45,15 @@ public class MainActivity extends AppCompatActivity  implements TextToSpeech.OnI
     private ImageView imageHandSign;
     private BottomNavigationView bottomNavigationView;
     private AssetManager assetManager;
+
+    private TextToSpeech tts;
+    private boolean loading = false;
+    private GestureController gestureController;
     private GestureClassifier gestureClassifier;
     private BluetoothModule bluetoothModule;
-    private Handler handler = new Handler();
 
-    private Runnable runnable;
-    private TextToSpeech tts;
+    private String lastSpokenTranslation = "";
 
-
-    // Buffer to track recent readings
-    private static Deque<int[]> flexReadingsHistory;
-    int[] currentFlexReadings;
-    private Boolean loading = false;
-    Map<String, String> currentGesture = new HashMap<>();
 
 
     @Override
@@ -76,15 +66,20 @@ public class MainActivity extends AppCompatActivity  implements TextToSpeech.OnI
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        setUp();
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        setUp();
-        asynchronousDataRead();
+        gestureController.start();
+    }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        gestureController.stop();
     }
 
     /**
@@ -103,50 +98,78 @@ public class MainActivity extends AppCompatActivity  implements TextToSpeech.OnI
         buttonSpeaker = findViewById(R.id.button_speaker);
         buttonSpeaker.setEnabled(false);
         buttonSpeaker.setOnClickListener(v -> {
-            String text= currentGesture.get("translation");
+            String text = textTranslatedOutput.getText().toString();
             speak(text);
         });
+
         tts = new TextToSpeech(this, this);
 
-
         bluetoothModule = new BluetoothModule();
-        flexReadingsHistory = new ArrayDeque<>();
+        assetManager = getApplicationContext().getAssets();
+        gestureClassifier = new GestureClassifier(assetManager);
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
+
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
-
         bottomNavigationView.setSelectedItemId(R.id.translation);
         bottomNavigationView.setItemActiveIndicatorColor(ContextCompat.getColorStateList(this, R.color.blue_gray_100));
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.settings) {
                 navigateToSettingsActivity();
-                return true; // Event handled
+                return true;
             } else if (item.getItemId() == R.id.gestures) {
                 navigateToGesturesActivity();
-                return true; // Event handled
+                return true;
             }
-            return false; // Event not handled
+            return false;
         });
-
-        assetManager = getApplicationContext().getAssets();
-        gestureClassifier = new GestureClassifier(assetManager);
-
     }
 
-    // Called when TextToSpeech engine is initialized
     @Override
-    public void onInit(int status) {
-
-        if (status == TextToSpeech.SUCCESS) {
-            // Set language (e.g., US English)
-            int result = tts.setLanguage(Locale.US);
-            if (result == TextToSpeech.LANG_MISSING_DATA ||
-                    result == TextToSpeech.LANG_NOT_SUPPORTED) {
-//                Log.e("TTS", "Language not supported.");
-            } else {
-                buttonSpeaker.setEnabled(true);
+    public void onGestureDetected(Gesture gesture) {
+        runOnUiThread(() -> {
+            String newTranslation = gesture.getTranslation();
+            textTranslatedOutput.setText(newTranslation);
+            setGestureImageView(gesture.getImagePath());
+            clearLoadingAnimation();
+            // Speak new translation if it has changed
+            if (!newTranslation.equals(lastSpokenTranslation)) {
+                speak(newTranslation);
+                lastSpokenTranslation = newTranslation;
             }
-        } else {
-//            Log.e("TTS", "Initialization failed.");
+        });
+    }
+
+    @Override
+    public void onTranslationInProgress() {
+        setLoadingAnimation();
+        textTranslatedOutput.setText("Translating...");
+    }
+
+    private void setLoadingAnimation() {
+        if (loading) return;
+        loading = true;
+        RotateAnimation anim = new RotateAnimation(0.0f, 360.0f,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        anim.setInterpolator(new LinearInterpolator());
+        anim.setRepeatCount(Animation.INFINITE);
+        anim.setDuration(5000);
+        imageHandSign.startAnimation(anim);
+    }
+
+    private void clearLoadingAnimation() {
+        if (!loading) return;
+        loading = false;
+        imageHandSign.clearAnimation();
+    }
+
+    private void setGestureImageView(String path) {
+        try {
+            InputStream ims = assetManager.open(path);
+            Drawable d = Drawable.createFromStream(ims, null);
+            imageHandSign.setImageDrawable(d);
+        } catch (IOException ex) {
+            // Handle error (for example, show a default image)
         }
     }
 
@@ -155,91 +178,17 @@ public class MainActivity extends AppCompatActivity  implements TextToSpeech.OnI
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
     }
 
-
-    private void showGestureAndTranslation(){
-        currentGesture = gestureClassifier.classifyGesture(convertIntArrayToFloatArray(currentFlexReadings));
-        String gesture_translation = (currentGesture.get("translation"));
-        textTranslatedOutput.setText(gesture_translation);
-        setGestureImageView(currentGesture.get("path"));
-//        speak(currentGesture.get("translation"));
-    }
-
-    private void asynchronousDataRead(){
-        runnable = new Runnable() {
-            @Override
-            public void run() {
-                currentFlexReadings = bluetoothModule.getGloveData();
-                flexReadingsHistory.addLast(currentFlexReadings);
-
-                // Maintain sliding window size
-                if (flexReadingsHistory.size() > STABILITY_WINDOW) {
-                    flexReadingsHistory.removeFirst();
-                }
-
-                // Check gesture stability
-                boolean isStable = GestureDetection.isGestureStable(flexReadingsHistory);
-//                isStable = true;
-
-                if (isStable) {
-                    showGestureAndTranslation();
-                    loading = false;
-
-                } else {
-                    setLoading();
-                    loading = true;
-
-                }
-
-
-                handler.postDelayed(this, 500); // 0.5 seconds delay
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            int result = tts.setLanguage(Locale.CANADA);
+            if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
+                buttonSpeaker.setEnabled(true);
             }
-        };
-
-        handler.post(runnable);
-
-    }
-
-    private void setLoading(){
-        if(loading) return;
-        loading = true;
-        RotateAnimation anim = new RotateAnimation(0.0f, 360.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-        anim.setInterpolator(new LinearInterpolator());
-        anim.setRepeatCount(Animation.INFINITE);
-        anim.setDuration(5000);
-        imageHandSign.startAnimation(anim);
-
-        textTranslatedOutput.setText("Translating...");
-    }
-
-    private void setGestureImageView(String path){
-        // load image
-        try {
-            // get input stream
-            InputStream ims = getAssets().open(path);
-            // load image as Drawable
-            Drawable d = Drawable.createFromStream(ims, null);
-            // set image to ImageView
-            imageHandSign.setImageDrawable(d);
-            imageHandSign.setAnimation(null);
-        }
-        catch(IOException ex) {
-            return;
         }
     }
 
-    public static float[] convertIntArrayToFloatArray(int[] intArray) {
-        if (intArray == null) {
-            return null;
-        }
-        float[] floatArray = new float[intArray.length];
-        for (int i = 0; i < intArray.length; i++) {
-            // Automatic widening conversion from int to float
-            floatArray[i] = intArray[i];
-        }
-        return floatArray;
-    }
-
-
+    // Activity Navigation
     private void navigateToSettingsActivity() {
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
@@ -251,9 +200,11 @@ public class MainActivity extends AppCompatActivity  implements TextToSpeech.OnI
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        handler.removeCallbacks(runnable); //stop handler when activity not visible super.onPause();
-
+    protected void onDestroy() {
+        if (tts != null) {
+            tts.shutdown();
+        }
+        gestureClassifier.close();
+        super.onDestroy();
     }
 }
