@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         setUp();
-        readGesture();
+//        readGesture();
         popUpBT();
     }
 
@@ -394,12 +394,12 @@ public class MainActivity extends AppCompatActivity {
 
                 UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-
-                BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuid);
-                socket.connect();
+                // Store the socket in the class-level variable
+                bluetoothSocket = device.createRfcommSocketToServiceRecord(uuid);
+                bluetoothSocket.connect();
                 runOnUiThread(() -> Toast.makeText(this, "Connected to " + device.getName(), Toast.LENGTH_SHORT).show());
 
-                //read data from the esp32
+                // Now that the socket is properly assigned, call this method
                 readDataFromSocket();
 
             } catch (Exception e) {
@@ -413,6 +413,10 @@ public class MainActivity extends AppCompatActivity {
     private void readDataFromSocket() {
         new Thread(() -> {
             try {
+                if (bluetoothSocket == null) {
+                    runOnUiThread(() -> Toast.makeText(this, "Error: Bluetooth socket not connected", Toast.LENGTH_SHORT).show());
+                    return;
+                }
 
                 InputStream inputStream = bluetoothSocket.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
