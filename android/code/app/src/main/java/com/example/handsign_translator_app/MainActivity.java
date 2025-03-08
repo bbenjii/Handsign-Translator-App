@@ -1,10 +1,12 @@
 package com.example.handsign_translator_app;
 
 // Import necessary packages and classes
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
@@ -15,7 +17,9 @@ import android.content.Context;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+
 import java.io.IOException;
+
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -73,12 +77,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private GestureController gestureController;
     private GestureClassifier gestureClassifier;
     private BluetoothModule bluetoothModule;
-    private BluetoothAdapter bluetoothAdapter;
     BluetoothAdapter mBluetoothAdapter;
 
     private List<BluetoothDevice> mBTDevices = new ArrayList<>(); //List to store discover devices
     private ArrayAdapter<String> mDeviceListAdapter; //Used to list device info in the listview
-    private BluetoothSocket bluetoothSocket;
 
 
     // Used to track the last translation spoken to prevent repeated TTS
@@ -94,15 +96,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        // Set up UI elements and components
-
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); //gets the default bluetooth adapter
-
-        //Checks if BT is supported on tbhe device
-        if (bluetoothAdapter == null) {
-            Toast.makeText(this, "Bluetooth not supported on this device", Toast.LENGTH_SHORT).show();
-            finish(); // Exit the app if Bluetooth is not supported
-        }
 
         setUp();
     }
@@ -111,8 +104,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     protected void onResume() {
         super.onResume();
         // Start gesture detection when activity resumes
-        popUpBT();
-
         gestureController.start();
 
     }
@@ -136,6 +127,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         imageHandSign = findViewById(R.id.image_hand_sign);
         buttonHistory = findViewById(R.id.button_history);
         buttonMoreOptions = findViewById(R.id.button_more_options);
+        popUpBT();
+
         buttonSpeaker = findViewById(R.id.button_speaker);
 
         // Initially disable TTS button until TTS is properly initialized
@@ -150,11 +143,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         tts = new TextToSpeech(this, this);
 
         // Instantiate Bluetooth module, asset manager, gesture classifier, and gesture controller
-        bluetoothModule = new BluetoothModule();
+        bluetoothModule = new BluetoothModule(getApplicationContext());
         assetManager = getApplicationContext().getAssets();
         gestureClassifier = new GestureClassifier(assetManager);
         // Pass this activity as the GestureListener so that callbacks can update the UI
-        gestureController = new GestureController(bluetoothModule, gestureClassifier, this, bluetoothSocket);
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
 
         // Set up bottom navigation view for activity navigation
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
@@ -175,14 +168,14 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     //The broastcast receiver is used to listen for changes in the BT adapater state
-    private final BroadcastReceiver mBroastCastReceiver1= new BroadcastReceiver() {
+    private final BroadcastReceiver mBroastCastReceiver1 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String action= intent.getAction();
-            if(action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)){ //checks if the action is related to BT state change
-                final int state= intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR); //gets new state
+            String action = intent.getAction();
+            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) { //checks if the action is related to BT state change
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR); //gets new state
 
-                switch  (state){
+                switch (state) {
                     case BluetoothAdapter.STATE_OFF:
                         Toast.makeText(MainActivity.this, "Bluetooth turned off", Toast.LENGTH_SHORT).show();
                         break;
@@ -237,10 +230,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
             popupMenu.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == R.id.bluetoothPopUp) {
-                    if(!mBluetoothAdapter.isEnabled()){
+                    if (!mBluetoothAdapter.isEnabled()) {
                         enableDisableBT();
-                    }
-                    else{
+                    } else {
                         showBluetoothDevicesDialog();
                     }
                     return true;
@@ -254,12 +246,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     // Method to enable or disable Bluetooth
     @SuppressLint("RestrictedApi")
-    private void enableDisableBT(){
-        if(mBluetoothAdapter == null){
+    private void enableDisableBT() {
+        if (mBluetoothAdapter == null) {
             Log.d("TAG", "enableDisableBT: does not have BT capacity");
         }
         // If Bluetooth is off, request to enable it
-        if(!mBluetoothAdapter.isEnabled()){
+        if (!mBluetoothAdapter.isEnabled()) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
                 return;
@@ -272,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
 
         // If Bluetooth is already enabled, disable it
-        if(mBluetoothAdapter.isEnabled()){
+        if (mBluetoothAdapter.isEnabled()) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
                 return;
@@ -283,15 +275,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
-    private void showBluetoothDevicesDialog(){
-        AlertDialog.Builder builder= new AlertDialog.Builder(this);
+    private void showBluetoothDevicesDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_bluetooth_devices, null);
         builder.setView(view);
 
         ListView pairedDevices = view.findViewById(R.id.paired_devices);
         ListView newDevices = view.findViewById(R.id.new_devices);
         Button discover = view.findViewById(R.id.btn_discover);
-        Button testBT= view.findViewById(R.id.btn_test);
+        Button testBT = view.findViewById(R.id.btn_test);
 
         ArrayList<String> pairedDevicesNames = new ArrayList<>();
         ArrayList<BluetoothDevice> pairedDevicesList = new ArrayList<>();
@@ -299,9 +291,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         pairedDevices.setAdapter(pairedDevicesAdapter);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)!= PackageManager.PERMISSION_GRANTED){
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
-        }else{
+        } else {
             Set<BluetoothDevice> pairedDevices1 = mBluetoothAdapter.getBondedDevices();
             for (BluetoothDevice device : pairedDevices1) {
                 pairedDevicesNames.add(device.getName() + "\n" + device.getAddress());
@@ -315,13 +307,13 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             pairedDevicesAdapter.notifyDataSetChanged();
         }
 
-        mBTDevices= new ArrayList<>();
-        mDeviceListAdapter= new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,new ArrayList<>());
+        mBTDevices = new ArrayList<>();
+        mDeviceListAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
         newDevices.setAdapter(mDeviceListAdapter);
 
         discover.setOnClickListener(v -> {
-            if(ActivityCompat.checkSelfPermission(this,Manifest.permission.BLUETOOTH_SCAN)!= PackageManager.PERMISSION_GRANTED){
-                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.BLUETOOTH_SCAN},1);
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 1);
                 return;
             }
             Toast.makeText(this, "Discovering devices...", Toast.LENGTH_SHORT).show();
@@ -356,7 +348,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         });
 
 
-
         pairedDevices.setOnItemClickListener((parent, itemView, position, id) -> {
             if (pairedDevicesList.isEmpty() || pairedDevicesNames.get(0).equals("No paired devices")) {
                 return;
@@ -370,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             BluetoothDevice device = pairedDevicesList.get(position);
             Toast.makeText(this, "Connecting to " + device.getName(), Toast.LENGTH_SHORT).show();
 
-            connectToDevice(device);
+            bluetoothModule.connectToDevice(this, device);
         });
 
         newDevices.setOnItemClickListener((parent, itemView, position, id) -> {
@@ -394,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             mBluetoothAdapter.cancelDiscovery();
 
             // Connect to the device
-            connectToDevice(device);
+            bluetoothModule.connectToDevice(this, device);
         });
 
         final AlertDialog dialog = builder.create();
@@ -415,97 +406,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
 
-    private void connectToDevice(BluetoothDevice device){
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Toast.makeText(this, "Attempting to connect to " + device.getName(), Toast.LENGTH_SHORT).show();
-        new Thread(() -> {
-            try {
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    return;
-                }
-
-                UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
-                // Store the socket in the class-level variable
-                bluetoothSocket = device.createRfcommSocketToServiceRecord(uuid);
-                bluetoothSocket.connect();
-                runOnUiThread(() -> Toast.makeText(this, "Connected to " + device.getName(), Toast.LENGTH_SHORT).show());
-
-                // Now that the socket is properly assigned, call this method
-                readDataFromSocket();
-
-            } catch (Exception e) {
-                final String message = e.getMessage();
-                runOnUiThread(() -> Toast.makeText(this, "Connection failed: " + message, Toast.LENGTH_SHORT).show());
-            }
-        }).start();
-    }
-
-
-    //reads data from the ESP32
-    private void readDataFromSocket() {
-        new Thread(() -> {
-            try {
-                if (bluetoothSocket == null) {
-                    runOnUiThread(() -> Toast.makeText(this, "Error: Bluetooth socket not connected", Toast.LENGTH_SHORT).show());
-                    return;
-                }
-
-                InputStream inputStream = bluetoothSocket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    final String data = line;
-                    runOnUiThread(() -> processSensorData(data)); // Process data on UI thread
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "Error reading data: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-            }
-        }).start();
-    }
-
     //processes the data from the from the readDataFromSocket.
-    private void processSensorData(String data) {
-        try {
-            // Split the comma-separated string into an array of values
-            String[] valueParts = data.split(",");
-            int[] sensorValues = new int[valueParts.length];
 
-            // Convert each string value to an integer
-            for (int i = 0; i < valueParts.length; i++) {
-                sensorValues[i] = Integer.parseInt(valueParts[i].trim());
-            }
-
-            // Display the values in a more readable format
-            StringBuilder display = new StringBuilder("Sensor Values: ");
-            for (int i = 0; i < sensorValues.length; i++) {
-                display.append("Sensor ").append(i + 1).append(": ").append(sensorValues[i]);
-                if (i < sensorValues.length - 1) {
-                    display.append(", ");
-                }
-            }
-            textTranslatedOutput.setText(display.toString());
-
-
-        } catch (NumberFormatException e) {
-            Log.e("SensorData", "Invalid data format: " + data, e);
-            textTranslatedOutput.setText("Error: Invalid data format");
-        } catch (Exception e) {
-            Log.e("SensorData", "Error processing data: " + data, e);
-            textTranslatedOutput.setText("Error processing data");
-        }
-    }
 
 
     /**
@@ -530,6 +432,14 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         });
     }
 
+    @Override
+    public void rawDataOutput(String data) {
+        // Update UI with loading animation and message
+        setGestureImageView("lebronjames.png");
+        // Clear any loading animation
+        clearLoadingAnimation();        textTranslatedOutput.setText(data);
+    }
+
     /**
      * Callback from GestureController when gesture translation is in progress.
      * Updates UI to indicate translation is ongoing.
@@ -539,6 +449,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         // Update UI with loading animation and message
         setLoadingAnimation();
         textTranslatedOutput.setText("Translating...");
+    }
+
+    @Override
+    public void onNoDeviceConnected() {
+        setLoadingAnimation();
+        textTranslatedOutput.setText("No device connected...");
     }
 
     /**

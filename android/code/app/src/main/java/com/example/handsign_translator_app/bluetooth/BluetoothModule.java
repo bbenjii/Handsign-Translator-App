@@ -1,37 +1,154 @@
 package com.example.handsign_translator_app.bluetooth;
 
+import android.Manifest;
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.util.Log;
+import android.widget.Toast;
+
+import androidx.core.app.ActivityCompat;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Random;
+import java.util.UUID;
 
 public class BluetoothModule {
 
-    public BluetoothModule() {
+    private static final String TAG = "BluetoothModule";
+    private BluetoothSocket bluetoothSocket = null;
+    private Context context;
+    // Latest data read from the Bluetooth socket (volatile for thread-safety)
+    private volatile String latestData = "";
+    private Thread dataThread;
+    private boolean keepReading = false;
+
+    public BluetoothModule(Context context) {
+        this.context = context;
+        bluetoothSocket = null;
     }
 
+    public boolean isDeviceConnected(){
+        return (bluetoothSocket != null);
+    }
+
+    /**
+     * Connects to the given Bluetooth device on a background thread.
+     * After connecting, starts the data reading thread.
+     */
+    public void connectToDevice(Activity activity, BluetoothDevice device) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // Permission check should be performed by the caller
+            return;
+        }
+        Toast.makeText(context, "Attempting to connect to " + device.getName(), Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+                bluetoothSocket = device.createRfcommSocketToServiceRecord(uuid);
+                bluetoothSocket.connect();
+                activity.runOnUiThread(() -> Toast.makeText(context, "Connected to " + device.getName(), Toast.LENGTH_SHORT).show());
+                // Start continuously reading data from the socket
+                startDataReading();
+            } catch (Exception e) {
+                final String message = e.getMessage();
+                activity.runOnUiThread(() -> Toast.makeText(context, "Connection failed: " + message, Toast.LENGTH_SHORT).show());
+                Log.e(TAG, "Connection failed", e);
+            }
+        }).start();
+    }
+
+    /**
+     * Starts a background thread that continuously reads data from the Bluetooth socket.
+     */
+    private void startDataReading() {
+        if (bluetoothSocket == null) return;
+        keepReading = true;
+        dataThread = new Thread(() -> {
+            try {
+                InputStream inputStream = bluetoothSocket.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                while (keepReading && (line = reader.readLine()) != null) {
+                    // Update latestData every time new data is received.
+                    latestData = line;
+                    // Optionally, you could invoke a callback here to immediately forward raw data.
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error reading data", e);
+            }
+        });
+        dataThread.start();
+    }
+
+    /**
+     * Stops the background data reading thread.
+     */
+    public void stopDataReading() {
+        keepReading = false;
+        if (dataThread != null && dataThread.isAlive()) {
+            dataThread.interrupt();
+        }
+    }
+
+    /**
+     * Returns the latest glove data as an array of integers.
+     * If no data is available, returns simulated (mock) data.
+     */
     public int[] getGloveData() {
-        int min = 0, max = 10;
-        int finger1_raw_data = randomNumber(min, max);
-        int finger2_raw_data = randomNumber(min, max);
-        int finger3_raw_data = randomNumber(min, max);
-        int finger4_raw_data = randomNumber(min, max);
-        int finger5_raw_data = randomNumber(min, max);
-
-        int[]  flexReadings = {finger1_raw_data, finger2_raw_data, finger3_raw_data, finger4_raw_data, finger5_raw_data};
-
+        int[] flexReadings;
+        if (!latestData.isEmpty()) {
+            try {
+                flexReadings = processSensorData(latestData);
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing sensor data: " + e.getMessage());
+                flexReadings = getMockReadings();
+            }
+        } else {
+            // If no real data is available, use mock data (useful for debugging)
+            flexReadings = getMockReadings();
+        }
         return flexReadings;
     }
+
+    public String getRawData(){
+        String data = latestData.toString();
+        return data;
+    }
+
+    /**
+     * Processes a comma-separated string of sensor data into an integer array.
+     */
+    private int[] processSensorData(String data) {
+        String[] valueParts = data.split(",");
+        int[] sensorValues = new int[valueParts.length];
+        for (int i = 0; i < valueParts.length; i++) {
+            sensorValues[i] = Integer.parseInt(valueParts[i].trim());
+        }
+        return sensorValues;
+    }
+
+    /**
+     * Provides simulated sensor data.
+     */
+    private int[] getMockReadings() {
+        int finger1 = randomNumber(0, 180);
+        int finger2 = randomNumber(0, 180);
+        int finger3 = randomNumber(0, 180);
+        int finger4 = randomNumber(0, 180);
+        int finger5 = randomNumber(0, 180);
+        return new int[]{finger1, finger2, finger3, finger4, finger5};
+    }
+
+    /**
+     * Generates a random number between min and max (inclusive).
+     */
     private static int randomNumber(int min, int max) {
         return new Random().nextInt(max - min + 1) + min;
     }
-
-    private static void printFlexReadings(int[] readings) {
-        StringBuilder readingString = new StringBuilder();
-        for (int i = 0; i < readings.length; i++) {
-            readingString.append("Flex").append(i + 1).append(": ").append(readings[i]).append("\t");
-        }
-        System.out.println(readingString);
-    }
-
-
-
-
 }
