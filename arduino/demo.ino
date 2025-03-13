@@ -3,44 +3,54 @@
 BluetoothSerial SerialBT;     // Create a BluetoothSerial object
 
 // Define the analog pin
-const int flexSensorPin = 4; // Use any available ADC pin
+const int flexSensorPin1 = 36; //thumb Use any available ADC pin
+const int flexSensorPin2 = 39;//index
+const int flexSensorPin3 = 34; //middle finger
+const int flexSensorPin4 = 35; //ring finger
+const int flexSensorPin5 = 32; //small finger
+
 
 void setup() {
   Serial.begin(115200);           // Start serial communication for debugging
   SerialBT.begin("ESP32_BT");     // Initialize Bluetooth with the device name "ESP32_BT"
   Serial.println("Bluetooth started, waiting for connections...");
+
+  pinMode(flexSensorPin1, INPUT);
+  pinMode(flexSensorPin2, INPUT);
+  pinMode(flexSensorPin3, INPUT);
+  pinMode(flexSensorPin4, INPUT);
+  pinMode(flexSensorPin5, INPUT);
+
+}
+
+int flexMap(int sensorValue){
+  int angle = map(sensorValue, 0, 1920, 0, 180);
+  return angle;
 }
 
 void loop() {
   // Read the sensor value
-  demo(180, 0, 180, 180, 180); //1
-  demo(180,0,0,180,180); //2
-  demo(0, 0, 0, 180, 180); //3
- demo(180, 0, 0, 0, 0);//4
-  demo(0, 0, 0, 0, 0);//5
+  int sensorValue1 = analogRead(flexSensorPin1);
+  int sensorValue2 = analogRead(flexSensorPin2);
+  int sensorValue3 = analogRead(flexSensorPin3);
+  int sensorValue4 = analogRead(flexSensorPin4);
+  // int sensorValue5 = analogRead(flexSensorPin5);
 
- 
-}
+  // int sensorValue4 = 1900;
+  int sensorValue5 = 1900;
 
+  
 
-
-void demo(int v0,int v1, int v2, int v3,int v4){
-    int sensorValue = digitalRead(flexSensorPin);
-  float voltage = (sensorValue / 4095.0) * 3.3;
+    
+   
 
   // Define the other values (can be fixed or dynamically computed)
-  int value0= v0;
-  int value1 = v1;
-  int value2 = v2;
-  int value3 = v3;
-  int value4 = v4;
+  
   // Debug output to Serial Monitor
-  Serial.println("Sensor Value: " + String(sensorValue) + " | Voltage: " + String(voltage));
-
+  
   // Construct a string with all 5 values, separated by commas
-  String data = String(value0) + "," + String(value1) + "," + String(value2) + "," + String(value3) + "," + String(value4);
-
-  // String data= String(sensorValue);
+  String data = String((sensorValue1)) + "," + String((sensorValue2)) + "," + String((sensorValue3)) 
+                    + "," + String((sensorValue4)) + "," + String((sensorValue5)) ;
 
   // Send the constructed string over Bluetooth
   SerialBT.println(data);
@@ -48,5 +58,8 @@ void demo(int v0,int v1, int v2, int v3,int v4){
   // Optional: Print the sent data for debugging
   Serial.println("Sent Data: " + data);
 
-  delay(3000); // Delay to limit update rate
+  delay(100); // Delay to limit update rate
+ 
 }
+
+
