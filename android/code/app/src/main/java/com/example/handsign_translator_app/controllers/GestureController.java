@@ -1,20 +1,12 @@
 package com.example.handsign_translator_app.controllers;
 
-import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
-import android.widget.Toast;
-
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
 import com.example.handsign_translator_app.models.Gesture;
 import com.example.handsign_translator_app.utils.Constants;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 
 public class GestureController {
@@ -35,25 +27,30 @@ public class GestureController {
     private GestureListener listener;
     // Stores the currently detected gesture (if any)
     public Gesture currentGesture;
-    private BluetoothSocket bluetoothSocket;
 
     /**
-     * Interface definition for callbacks to be invoked when a gesture is detected or translation is in progress.
+     * Interface definition for callbacks to be invoked when a gesture is detected
+     * or when translation is in progress.
+     *
+     * Additionally, you might consider adding a callback like onSensorDataReceived(int[] data)
+     * if you want to update the UI or log raw sensor data.
      */
     public interface GestureListener {
         void onGestureDetected(Gesture gesture);
         void onTranslationInProgress();
-
+        void onNoDeviceConnected();
+        void rawDataOutput(String data);
+        // Optionally:
+        // void onSensorDataReceived(int[] sensorData);
     }
 
     /**
      * Constructor for GestureController.
      */
-    public GestureController(BluetoothModule bluetoothModule, GestureClassifier gestureClassifier, GestureListener listener, BluetoothSocket bluetoothSocket) {
+    public GestureController(BluetoothModule bluetoothModule, GestureClassifier gestureClassifier, GestureListener listener) {
         this.bluetoothModule = bluetoothModule;
         this.gestureClassifier = gestureClassifier;
         this.listener = listener;
-        this.bluetoothSocket = bluetoothSocket;
     }
 
     /**
@@ -76,70 +73,55 @@ public class GestureController {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            // Get the latest sensor readings from the Bluetooth module
-            int[] currentFlexReadings = new int[5];
+            if (bluetoothModule.isDeviceConnected() == true){
 
-//            currentFlexReadings = bluetoothModule.getGloveData();
-
-            ArrayList<String> rawData = new ArrayList<>();
-            try {
-
-//                if (bluetoothSocket == null) {
-////                    (Toast.makeText(this, "Error: Bluetooth socket not connected", Toast.LENGTH_SHORT).show());
+//                if(true){
+//                    listener.rawDataOutput(bluetoothModule.getRawData());
 //                    return;
 //                }
 
+                // Retrieve the latest sensor data from the Bluetooth module
+                int[] currentFlexReadings = bluetoothModule.getGloveData();
+                boolean isStable = false;
+                if (currentFlexReadings.length != 0) {
 
-                InputStream inputStream = bluetoothSocket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                String delimiter = ", ";
-                while ((line = reader.readLine()) != null) {
-                    String[] values = line.split(delimiter);
-                    for (int i = 0; i < values.length; i++) {
-                        currentFlexReadings[i] = Integer.parseInt(values[i]);
+                    // Optionally, you could invoke a callback here:
+                    // listener.onSensorDataReceived(currentFlexReadings);
+
+                    // Add the new readings to the sliding window
+                    flexReadingsHistory.addLast(currentFlexReadings);
+                    // Maintain a fixed-size sliding window
+                    if (flexReadingsHistory.size() > STABILITY_WINDOW) {
+                        flexReadingsHistory.removeFirst();
                     }
-//                    currentFlexReadings = bluetoothModule.getGloveData();
-
-//                    processSensorData(data);
+                    // Check if the current gesture (based on recent sensor readings) is stable
+                    isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-//                runOnUiThread(() -> Toast.makeText(this, "Error reading data: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                if (isStable) {
+                    // Convert sensor readings from int[] to float[]
+                    float[] sensorData = convertIntArrayToFloatArray(currentFlexReadings);
+                    // Classify the gesture using the gesture classifier
+                    Gesture gesture = gestureClassifier.classifyGesture(sensorData);
+                    currentGesture = gesture;
+                    // Notify listener that a gesture has been detected
+                    listener.onGestureDetected(gesture);
+                } else {
+                    currentGesture = null;
+                    // Notify listener that translation is in progress (gesture unstable)
+                    listener.onTranslationInProgress();
+                }
+            }
+            else{
+                listener.onNoDeviceConnected();
             }
 
-            // Add the new readings to the sliding window
-            flexReadingsHistory.addLast(currentFlexReadings);
-            // Ensure the sliding window does not exceed the specified stability window size
-            if (flexReadingsHistory.size() > STABILITY_WINDOW) {
-                flexReadingsHistory.removeFirst();
-            }
-            // Check if the current gesture (based on recent sensor readings) is stable
-            boolean isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
-//            isStable = false; // Uncomment for debugging to simulate instability
-
-            if (isStable) {
-                // Convert sensor readings from int[] to float[]
-                float[] sensorData = convertIntArrayToFloatArray(currentFlexReadings);
-                // Classify the gesture using the gesture classifier
-                Gesture gesture = gestureClassifier.classifyGesture(sensorData);
-                // Update currentGesture with the detected gesture
-                currentGesture = gesture;
-                // Notify listener that a gesture has been detected
-                listener.onGestureDetected(gesture);
-            } else {
-                // If the gesture is not stable, clear the current gesture
-                currentGesture = null;
-                // Notify listener that translation is in progress (i.e., waiting for a stable gesture)
-                listener.onTranslationInProgress();
-            }
             // Schedule the next sensor reading after the specified delay
             handler.postDelayed(this, SENSOR_READ_DELAY_MS);
         }
     };
 
     /**
-     * Converts an array of integers to an array of floats.
+     * Helper method to convert an array of integers to an array of floats.
      */
     private float[] convertIntArrayToFloatArray(int[] intArray) {
         float[] floatArray = new float[intArray.length];
