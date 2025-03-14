@@ -42,6 +42,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -91,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); //ensures that no dark mode i think? check after:
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -193,7 +195,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     };
 
-    //this one is used to get the new bt devices when scanning
+    //this one is used to get the new bt devices when scanning, Fixed issue where it would show null devices
+    //null devices mean that they are not available for scanning/BT so we are skipping them instead of s
     private final BroadcastReceiver mBroastCastReceiver3 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -207,11 +210,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     return;
                 }
                 //retrieves device name and address
-                assert device != null;
+
                 String deviceName = device.getName();
+
+                if(deviceName == null || deviceName.isEmpty()){
+                    return;
+                }
+
                 String deviceAddress = device.getAddress();
                 // If this device isn't already in our list, add it and update the adapter
-                if (device != null && !mBTDevices.contains(device)) {
+                if (!mBTDevices.contains(device)) {
                     mBTDevices.add(device);
                     mDeviceListAdapter.add(deviceName + "\n" + deviceAddress);
                     mDeviceListAdapter.notifyDataSetChanged();
@@ -507,7 +515,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
             // Set TTS language to Canadian English
-            int result = tts.setLanguage(Locale.CANADA);
+            int result = tts.setLanguage(Locale.UK);
             if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
                 buttonSpeaker.setEnabled(true);
             }

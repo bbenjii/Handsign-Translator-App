@@ -66,6 +66,7 @@ public class BluetoothModule {
     /**
      * Starts a background thread that continuously reads data from the Bluetooth socket.
      */
+    //added a Toast message that shows when the device haS been disconnected:
     private void startDataReading() {
         if (bluetoothSocket == null) return;
         keepReading = true;
@@ -81,6 +82,23 @@ public class BluetoothModule {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error reading data", e);
+
+                if (bluetoothSocket !=null){
+                    try{
+                        boolean isConnected = bluetoothSocket.isConnected();
+                        if(!isConnected){
+                            if(context instanceof Activity){
+                                Activity activity= (Activity) context;
+                                activity.runOnUiThread(()-> Toast.makeText(context,"Bluetooth device has been disconnected", Toast.LENGTH_SHORT).show());
+                            }
+                            Log.d(TAG, "Bluetooth device disconnected");
+                        }
+                    }catch (Exception ex){
+                        Log.e(TAG, "ERROR checking connection status",ex);
+                    }
+                }
+            } finally{
+                keepReading=false;
             }
         });
         dataThread.start();
