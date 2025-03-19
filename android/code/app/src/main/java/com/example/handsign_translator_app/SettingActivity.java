@@ -2,7 +2,10 @@ package com.example.handsign_translator_app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -69,6 +72,21 @@ public class SettingActivity extends AppCompatActivity {
     private void navigateToGesturesActivity() {
         Intent intent = new Intent(this, GesturesActivity.class);
         startActivity(intent);
+    }
+
+    private void addGesture(View v){
+        PopupMenu popupMenu = new PopupMenu(SettingActivity.this,v);
+        popupMenu.getMenuInflater().inflate(R.menu.settings_activity_popup, popupMenu.getMenu());
+
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.addingGestures) {
+
+            }
+            return false;
+        });
+        popupMenu.show();
+
     }
 
 
