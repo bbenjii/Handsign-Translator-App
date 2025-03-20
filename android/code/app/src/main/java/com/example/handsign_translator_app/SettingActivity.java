@@ -74,20 +74,7 @@ public class SettingActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void addGesture(View v){
-        PopupMenu popupMenu = new PopupMenu(SettingActivity.this,v);
-        popupMenu.getMenuInflater().inflate(R.menu.settings_activity_popup, popupMenu.getMenu());
 
-
-        popupMenu.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.addingGestures) {
-
-            }
-            return false;
-        });
-        popupMenu.show();
-
-    }
 
 
 }
