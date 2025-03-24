@@ -79,19 +79,17 @@ public class GesturesActivity extends AppCompatActivity {
 
         originalMeanings = new HashMap<>();
         // Store original meanings from CSV
-        for (int i = 1; i <= 10; i++) {
-            String meaning = String.valueOf(i);
-            originalMeanings.put(String.valueOf(i), meaning);
-            // Save to SharedPreferences if not already saved
-            String key = KEY_ORIGINAL_PREFIX + i;
+        for(Gesture gesture : all_gestures){
+            String meaning = gesture.getTranslation();
+            originalMeanings.put(gesture.getLabel(), meaning);
+
+            String key = KEY_ORIGINAL_PREFIX + gesture.getLabel();
+            if(!gesturePrefs.getString(key, "").equals(meaning)){
+                gesturePrefs.edit().putString(key, meaning).apply();
+            }
             if (!gesturePrefs.contains(key)) {
                 gesturePrefs.edit().putString(key, meaning).apply();
             }
-        }
-        // Add Y gesture
-        originalMeanings.put("y", "Y");
-        if (!gesturePrefs.contains(KEY_ORIGINAL_PREFIX + "y")) {
-            gesturePrefs.edit().putString(KEY_ORIGINAL_PREFIX + "y", "Y").apply();
         }
     }
 
@@ -143,10 +141,12 @@ public class GesturesActivity extends AppCompatActivity {
                 .setPositiveButton("Reset", (dialog, which) -> {
                     // Clear all custom meanings
                     SharedPreferences.Editor editor = gesturePrefs.edit();
+                    for (Gesture gesture : all_gestures) {
+                        editor.remove(KEY_CUSTOM_PREFIX + gesture.getLabel());
+                    }
                     for (int i = 1; i <= 10; i++) {
                         editor.remove(KEY_CUSTOM_PREFIX + i);
                     }
-                    editor.remove(KEY_CUSTOM_PREFIX + "y");
                     editor.apply();
 
                     // Reload the UI
