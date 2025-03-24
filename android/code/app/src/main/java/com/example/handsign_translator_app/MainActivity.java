@@ -26,6 +26,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
@@ -78,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private GestureController gestureController;
     private GestureClassifier gestureClassifier;
     private BluetoothModule bluetoothModule;
+    private boolean muted = false;
     BluetoothAdapter mBluetoothAdapter;
 
     private List<BluetoothDevice> mBTDevices = new ArrayList<>(); //List to store discover devices
@@ -129,9 +133,13 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         imageHandSign = findViewById(R.id.image_hand_sign);
         buttonHistory = findViewById(R.id.button_history);
         buttonMoreOptions = findViewById(R.id.button_more_options);
+
         popUpBT();
 
         buttonSpeaker = findViewById(R.id.button_speaker);
+
+        if(muted) {buttonSpeaker.setImageResource(R.drawable.volume_off_logo);}
+        else{buttonSpeaker.setImageResource(R.drawable.speaker_logo);}
 
         // Initially disable TTS button until TTS is properly initialized
         buttonSpeaker.setEnabled(false);
@@ -147,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         // Instantiate Bluetooth module, asset manager, gesture classifier, and gesture controller
         bluetoothModule = new BluetoothModule(getApplicationContext());
         assetManager = getApplicationContext().getAssets();
-        gestureClassifier = new GestureClassifier(assetManager);
+        gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
         // Pass this activity as the GestureListener so that callbacks can update the UI
         gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
 
@@ -244,6 +252,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                         showBluetoothDevicesDialog();
                     }
                     return true;
+                }
+                else if (item.getItemId() == R.id.mute){
+                    muted = !muted;
+                    if(muted) {buttonSpeaker.setImageResource(R.drawable.volume_off_logo);}
+                    else{buttonSpeaker.setImageResource(R.drawable.speaker_logo);}
+
                 }
                 return false;
             });
@@ -427,16 +441,14 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         runOnUiThread(() -> {
             String newTranslation = gesture.getTranslation();
             // Update text view with the new translation
-            textTranslatedOutput.setText(newTranslation);
-            // Update the image view with the gesture image
-            setGestureImageView(gesture.getImagePath());
+            setTranslationOutput(gesture);
+
             // Clear any loading animation
             clearLoadingAnimation();
-            // Speak new translation if it has changed from the last spoken translation
-            if (!newTranslation.equals(lastSpokenTranslation)) {
-                speak(newTranslation);
-                lastSpokenTranslation = newTranslation;
-            }
+            // Update the image view with the gesture image
+            setGestureImageView(gesture.getImagePath());
+
+
         });
     }
 
@@ -501,10 +513,32 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    private void setTranslationOutput(Gesture gesture){
+        String customTranslation = gesture.getCustomTranslation();
+        String translation = gesture.getTranslation();
+
+        String output;
+        if(customTranslation.isEmpty()){
+            output = translation;
+        }
+        else{
+            output = customTranslation;
+        }
+
+        textTranslatedOutput.setText(output);
+
+        // Speak new translation if it has changed from the last spoken translation
+        if (!output.equals(lastSpokenTranslation)) {
+            speak(output);
+            lastSpokenTranslation = output;
+        }
+    }
+
     /**
      * Uses the TextToSpeech engine to speak the provided text.
      */
     private void speak(String text) {
+        if(muted) return;
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
     }
 

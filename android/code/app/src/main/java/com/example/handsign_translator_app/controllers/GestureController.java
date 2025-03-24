@@ -73,7 +73,9 @@ public class GestureController {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            if (bluetoothModule.isDeviceConnected() == true){
+            boolean deviceConnected = bluetoothModule.isDeviceConnected();
+//            deviceConnected = true;
+            if (deviceConnected){
 
 //                if(true){
 //                    listener.rawDataOutput(bluetoothModule.getRawData());
