@@ -1,6 +1,7 @@
 package com.example.handsign_translator_app.ml_module;
 
 // Import necessary Android classes and TensorFlow Lite interpreter
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 
@@ -31,7 +32,7 @@ public class GestureClassifier {
     /**
      * Constructor initializes the TensorFlow Lite interpreter and loads gesture information.
      */
-    public GestureClassifier(AssetManager assetManager) {
+    public GestureClassifier(AssetManager assetManager, Context context) {
         try {
             // Load the TensorFlow Lite model file and initialize the interpreter
             tflite = new Interpreter(loadModelFile(assetManager, "gesture_model.tflite"));
@@ -40,7 +41,7 @@ public class GestureClassifier {
             throw new RuntimeException("Failed to load TensorFlow Lite model", e);
         }
         // Initialize the helper that loads gesture metadata from CSV
-        gestureInfoHelper = new GestureInfoHelper(assetManager);
+        gestureInfoHelper = new GestureInfoHelper(assetManager, context);
     }
 
     /**

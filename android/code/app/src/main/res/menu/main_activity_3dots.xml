@@ -3,4 +3,7 @@
     <item
         android:title= "Bluetooth connection"
         android:id="@+id/bluetoothPopUp"/>
+    <item
+        android:title= "Mute/Unmute"
+        android:id="@+id/mute"/>
 </menu>

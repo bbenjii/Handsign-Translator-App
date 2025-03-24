@@ -1,5 +1,9 @@
 package com.example.handsign_translator_app;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 
@@ -18,12 +22,17 @@ import java.util.Map;
 public class GestureInfoHelper {
     // List to hold Gesture objects loaded from CSV data.
     private List<Gesture> gestures;
+    private SharedPreferences gesturePrefs;
+    private static final String PREFS_NAME = "gesture_mappings";
+private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
+
 
     /**
      * Constructor loads gesture information from a CSV file using the provided AssetManager.
      */
-    public GestureInfoHelper(AssetManager assetManager) {
+    public GestureInfoHelper(AssetManager assetManager, Context context) {
         gestures = new ArrayList<>();
+        gesturePrefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         // CSV file name and delimiter definition
         String csvFile = "gesture_info.csv";
@@ -54,8 +63,14 @@ public class GestureInfoHelper {
                 // Retrieve and trim the translation and image path from the map
                 String translation = map.get("translation").trim();
                 String imagePath = map.get("path").trim();
+                String label = map.get("label").trim();
+
+                String customKey = KEY_CUSTOM_PREFIX + label;
+                String customTranslation = gesturePrefs.getString(customKey, "");
+
+
                 // Create a new Gesture object and add it to the list
-                gestures.add(new Gesture(translation, imagePath));
+                gestures.add(new Gesture(translation, imagePath, label, customTranslation));
             }
         }
         catch(IOException e) {
@@ -63,6 +78,10 @@ public class GestureInfoHelper {
             e.printStackTrace();
             return;
         }
+    }
+
+    public List<Gesture> getGestures(){
+        return gestures;
     }
 
     /**
@@ -74,6 +93,6 @@ public class GestureInfoHelper {
             return gestures.get(index);
         }
         // Return a default gesture if index is out of bounds
-        return new Gesture("Unknown Gesture", "default_image.png");
+        return new Gesture("Unknown Gesture", "default_image.png", "unknown");
     }
 }
