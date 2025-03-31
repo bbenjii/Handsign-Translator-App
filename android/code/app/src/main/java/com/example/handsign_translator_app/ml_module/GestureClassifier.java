@@ -19,9 +19,9 @@ import java.util.Arrays;
 import java.util.Map;
 
 public class GestureClassifier {
-    // Number of input features (sensor readings for THUMB, INDEX, MIDDLE, RING, LITTLE)
-    private static final int INPUT_FEATURES = Constants.INPUT_FEATURES;
-    // Number of output classes
+    // For dynamic gestures, we need a fixed number of time steps.
+    private static final int TIME_STEPS = 100;  // e.g., 100
+    private static final int INPUT_FEATURES = Constants.INPUT_FEATURES; // e.g., 11 (5 flex + 6 IMU)
     private static final int OUTPUT_CLASSES = Constants.OUTPUT_CLASSES;
 
     // TensorFlow Lite interpreter instance for running the ML model
@@ -35,7 +35,7 @@ public class GestureClassifier {
     public GestureClassifier(AssetManager assetManager, Context context) {
         try {
             // Load the TensorFlow Lite model file and initialize the interpreter
-            tflite = new Interpreter(loadModelFile(assetManager, "gesture_model.tflite"));
+            tflite = new Interpreter(loadModelFile(assetManager, "gesture_gru_model.tflite"));
         } catch (IOException e) {
             // Throw a runtime exception if the model fails to load
             throw new RuntimeException("Failed to load TensorFlow Lite model", e);
@@ -48,28 +48,41 @@ public class GestureClassifier {
      * Loads the model file from the assets folder.
      */
     private MappedByteBuffer loadModelFile(AssetManager assetManager, String modelFile) throws IOException {
-        // Open the model file descriptor from assets
         AssetFileDescriptor fileDescriptor = assetManager.openFd(modelFile);
-        // Create a FileInputStream to read the file
         FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-        // Get the file channel to map the file into memory
         FileChannel fileChannel = inputStream.getChannel();
-        // Map the file into a MappedByteBuffer and return it
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, fileDescriptor.getStartOffset(), fileDescriptor.getDeclaredLength());
     }
 
     /**
-     * Classifies the gesture based on provided sensor data.
+     * Classifies the gesture based on a sequence of sensor readings.
+     *
+     * @param sensorSequence A 2D array of sensor data with shape (TIME_STEPS, INPUT_FEATURES),
+     *                       where each inner array represents a time step.
+     * @return The predicted Gesture.
      */
-    public Gesture classifyGesture(float[] sensorData) {
-        // Validate that the input sensor data has the expected number of features
-        if (sensorData.length != INPUT_FEATURES) {
-            throw new IllegalArgumentException("Expected " + INPUT_FEATURES + " sensor readings, but got " + sensorData.length);
+    public Gesture classifyGesture(float[][] sensorSequence) {
+        // Validate that the sequence has the expected number of time steps
+        if (sensorSequence.length != TIME_STEPS) {
+            throw new IllegalArgumentException("Expected " + TIME_STEPS + " time steps, but got " + sensorSequence.length);
         }
-        // Prepare a 2D output array to store the output probabilities for each class
+        // Validate that each time step has the expected number of features
+        for (int i = 0; i < sensorSequence.length; i++) {
+            if (sensorSequence[i].length != INPUT_FEATURES) {
+                throw new IllegalArgumentException("Expected " + INPUT_FEATURES + " features per time step, but got " + sensorSequence[i].length + " at index " + i);
+            }
+        }
+
+        // Prepare input: create a 3D array of shape (1, TIME_STEPS, INPUT_FEATURES)
+        float[][][] input = new float[1][TIME_STEPS][INPUT_FEATURES];
+        input[0] = sensorSequence;
+
+        // Prepare output: a 2D array to store the probabilities for each class
         float[][] output = new float[1][OUTPUT_CLASSES];
-        // Run inference on the sensor data using the TensorFlow Lite model
-        tflite.run(sensorData, output);
+
+        // Run inference on the sequence using the TensorFlow Lite model
+        tflite.run(input, output);
+
         // Get the index of the class with the highest probability
         int predictedIndex = getMaxIndex(output[0]);
         // Convert the index to a Gesture using the helper and return it
@@ -81,7 +94,6 @@ public class GestureClassifier {
      */
     private int getMaxIndex(float[] probabilities) {
         int maxIndex = 0;
-        // Iterate through probabilities starting from the second element
         for (int i = 1; i < probabilities.length; i++) {
             if (probabilities[i] > probabilities[maxIndex]) {
                 maxIndex = i;
@@ -91,19 +103,12 @@ public class GestureClassifier {
     }
 
     /**
-     * Maps the predicted index to a Gesture object.
+     * Converts the predicted index into a Gesture.
+     * (This method should use gestureInfoHelper to get gesture metadata.)
      */
     private Gesture getGestureFromIndex(int index) {
-        // Delegate to the GestureInfoHelper to obtain the Gesture details
+        // Implementation depends on how you m ap indices to gestures.
+        // For example:
         return gestureInfoHelper.getGestureAt(index);
-    }
-
-    /**
-     * Releases the resources held by the TensorFlow Lite interpreter.
-     */
-    public void close() {
-        if (tflite != null) {
-            tflite.close();
-        }
     }
 }
