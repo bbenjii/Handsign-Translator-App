@@ -16,7 +16,7 @@ public class GestureController {
     private static final int SENSOR_READ_DELAY_MS = Constants.SENSOR_READ_DELAY_MS;
 
     // Deque to hold the history of sensor readings
-    private Deque<float[]> flexReadingsHistory = new ArrayDeque<>();
+    private Deque<double[]> flexReadingsHistory = new ArrayDeque<>();
     // Module responsible for obtaining sensor data from the glove
     private BluetoothModule bluetoothModule;
     // Module that performs gesture classification using TensorFlow Lite
@@ -74,22 +74,11 @@ public class GestureController {
         @Override
         public void run() {
             boolean deviceConnected = bluetoothModule.isDeviceConnected();
-//            deviceConnected = true;
-            if (deviceConnected){
-
-//                if(true){
-//                    listener.rawDataOutput(bluetoothModule.getRawData());
-//                    return;
-//                }
-
+            if (deviceConnected) {
                 // Retrieve the latest sensor data from the Bluetooth module
-                float[] currentFlexReadings = bluetoothModule.getGloveData();
+                double[] currentFlexReadings = bluetoothModule.getGloveData();
                 boolean isStable = false;
                 if (currentFlexReadings.length != 0) {
-
-                    // Optionally, you could invoke a callback here:
-                    // listener.onSensorDataReceived(currentFlexReadings);
-
                     // Add the new readings to the sliding window
                     flexReadingsHistory.addLast(currentFlexReadings);
                     // Maintain a fixed-size sliding window
@@ -97,30 +86,25 @@ public class GestureController {
                         flexReadingsHistory.removeFirst();
                     }
                     // Check if the current gesture (based on recent sensor readings) is stable
-//                    isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
-                    if(flexReadingsHistory.size() < STABILITY_WINDOW){
-                        isStable = false;
-                    }
-                    else{
-                        isStable = true;
-                    }
+                    isStable = flexReadingsHistory.size() >= STABILITY_WINDOW;
                 }
+
                 if (isStable) {
-                    // Convert sensor readings from int[] to float[]
-                    float[] sensorData = currentFlexReadings;
-                    // Classify the gesture using the gesture classifier
-
-                    // data history of size 100
-
-                    // Assume flexReadingsHistory is already populated
-                    int size = flexReadingsHistory.size();
-                    float[][] readingsArray = new float[size][];
+                    // Convert sensor readings from double[] to float[]
+                    float[][] readingsArray = new float[flexReadingsHistory.size()][];
                     int index = 0;
-                    for (float[] reading : flexReadingsHistory) {
-                        readingsArray[index++] = reading;
+                    for (double[] reading : flexReadingsHistory) {
+                        float[] floatReading = new float[reading.length];
+                        for (int i = 0; i < reading.length; i++) {
+                            floatReading[i] = (float) reading[i];  // Convert each double to float
+                        }
+                        readingsArray[index++] = floatReading;
                     }
+
+                    // Classify the gesture using the gesture classifier
                     Gesture gesture = gestureClassifier.classifyGesture(readingsArray);
                     currentGesture = gesture;
+
                     // Notify listener that a gesture has been detected
                     listener.onGestureDetected(gesture);
                 } else {
@@ -128,8 +112,7 @@ public class GestureController {
                     // Notify listener that translation is in progress (gesture unstable)
                     listener.onTranslationInProgress();
                 }
-            }
-            else{
+            } else {
                 listener.onNoDeviceConnected();
             }
 
@@ -138,14 +121,15 @@ public class GestureController {
         }
     };
 
+
     /**
      * Helper method to convert an array of integers to an array of floats.
      */
-    private float[] convertIntArrayToFloatArray(int[] intArray) {
-        float[] floatArray = new float[intArray.length];
-        for (int i = 0; i < intArray.length; i++) {
-            floatArray[i] = intArray[i];
-        }
-        return floatArray;
-    }
+//    private double[] convertIntArrayToFloatArray(int[] intArray) {
+//        float[] floatArray = new float[intArray.length];
+//        for (int i = 0; i < intArray.length; i++) {
+//            floatArray[i] = intArray[i];
+//        }
+//        return floatArray;
+//    }
 }
