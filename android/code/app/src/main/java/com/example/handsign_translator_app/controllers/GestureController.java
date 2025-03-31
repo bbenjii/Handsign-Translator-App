@@ -16,7 +16,7 @@ public class GestureController {
     private static final int SENSOR_READ_DELAY_MS = Constants.SENSOR_READ_DELAY_MS;
 
     // Deque to hold the history of sensor readings
-    private Deque<int[]> flexReadingsHistory = new ArrayDeque<>();
+    private Deque<float[]> flexReadingsHistory = new ArrayDeque<>();
     // Module responsible for obtaining sensor data from the glove
     private BluetoothModule bluetoothModule;
     // Module that performs gesture classification using TensorFlow Lite
@@ -83,7 +83,7 @@ public class GestureController {
 //                }
 
                 // Retrieve the latest sensor data from the Bluetooth module
-                int[] currentFlexReadings = bluetoothModule.getGloveData();
+                float[] currentFlexReadings = bluetoothModule.getGloveData();
                 boolean isStable = false;
                 if (currentFlexReadings.length != 0) {
 
@@ -97,13 +97,24 @@ public class GestureController {
                         flexReadingsHistory.removeFirst();
                     }
                     // Check if the current gesture (based on recent sensor readings) is stable
-                    isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
+//                    isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
+                    isStable = true;
                 }
                 if (isStable) {
                     // Convert sensor readings from int[] to float[]
-                    float[] sensorData = convertIntArrayToFloatArray(currentFlexReadings);
+                    float[] sensorData = currentFlexReadings;
                     // Classify the gesture using the gesture classifier
-                    Gesture gesture = gestureClassifier.classifyGesture(sensorData);
+
+                    // data history of size 100
+
+                    // Assume flexReadingsHistory is already populated
+                    int size = flexReadingsHistory.size();
+                    float[][] readingsArray = new float[size][];
+                    int index = 0;
+                    for (float[] reading : flexReadingsHistory) {
+                        readingsArray[index++] = reading;
+                    }
+                    Gesture gesture = gestureClassifier.classifyGesture(readingsArray);
                     currentGesture = gesture;
                     // Notify listener that a gesture has been detected
                     listener.onGestureDetected(gesture);

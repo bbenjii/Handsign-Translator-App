@@ -118,8 +118,8 @@ public class BluetoothModule {
      * Returns the latest glove data as an array of integers.
      * If no data is available, returns simulated (mock) data.
      */
-    public int[] getGloveData() {
-        int[] flexReadings;
+    public float[] getGloveData() {
+        float[] flexReadings;
         if (!latestData.isEmpty()) {
             try {
                 flexReadings = processSensorData(latestData);
@@ -142,9 +142,9 @@ public class BluetoothModule {
     /**
      * Processes a comma-separated string of sensor data into an integer array.
      */
-    private int[] processSensorData(String data) {
+    private float[] processSensorData(String data) {
         String[] valueParts = data.split(",");
-        int[] sensorValues = new int[valueParts.length];
+        float[] sensorValues = new float[valueParts.length];
         for (int i = 0; i < valueParts.length; i++) {
             sensorValues[i] = Integer.parseInt(valueParts[i].trim());
         }
@@ -154,7 +154,7 @@ public class BluetoothModule {
     /**
      * Provides simulated sensor data.
      */
-    private int[] getMockReadings() {
+    private float[] getMockReadings() {
         int finger1 = randomNumber(0,180);
         int finger2 = randomNumber(0,180);
         int finger3 = randomNumber(0,180);
@@ -162,7 +162,7 @@ public class BluetoothModule {
         int finger5 = randomNumber(0,180);
 //        return new int[]{finger1, finger2, finger3, finger4, finger5};
 
-        return new int[]{180, 0, 0, 180, 180};
+        return new float[]{180, 0, 0, 180, 180};
     }
 
     /**
