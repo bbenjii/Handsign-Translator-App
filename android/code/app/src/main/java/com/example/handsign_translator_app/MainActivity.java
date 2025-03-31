@@ -305,7 +305,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         ListView pairedDevices = view.findViewById(R.id.paired_devices);
         ListView newDevices = view.findViewById(R.id.new_devices);
         Button discover = view.findViewById(R.id.btn_discover);
-        Button testBT = view.findViewById(R.id.btn_test);
+
 
         ArrayList<String> pairedDevicesNames = new ArrayList<>();
         ArrayList<BluetoothDevice> pairedDevicesList = new ArrayList<>();

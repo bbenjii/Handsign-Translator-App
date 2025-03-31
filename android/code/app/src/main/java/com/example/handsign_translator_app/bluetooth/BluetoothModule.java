@@ -15,18 +15,24 @@ import androidx.core.app.ActivityCompat;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
+import java.util.ArrayList;
 
 public class BluetoothModule {
 
     private static final String TAG = "BluetoothModule";
+    private static final int MAX_READINGS= 100;
+    private Queue<int[]> readingsHistory= new LinkedList<>();
     private BluetoothSocket bluetoothSocket = null;
     private Context context;
     // Latest data read from the Bluetooth socket (volatile for thread-safety)
     private volatile String latestData = "";
     private Thread dataThread;
     private boolean keepReading = false;
+    private ArrayList<int[]> sensorReadings = new ArrayList<>();
 
     public BluetoothModule(Context context) {
         this.context = context;
@@ -79,6 +85,12 @@ public class BluetoothModule {
                     // Update latestData every time new data is received.
                     latestData = line;
                     // Optionally, you could invoke a callback here to immediately forward raw data.
+                    try {
+                        int[] processed = processSensorData(line);
+                        storeReading(processed);
+                    }catch(Exception e){
+                        Log.e(TAG, "Error processing data",e);
+                    }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error reading data", e);
@@ -112,6 +124,17 @@ public class BluetoothModule {
         if (dataThread != null && dataThread.isAlive()) {
             dataThread.interrupt();
         }
+    }
+
+    private synchronized void storeReading(int[] reading){
+        readingsHistory.add(reading);
+        while(readingsHistory.size()> MAX_READINGS){
+            readingsHistory.poll(); //poll instead of clear because clear would remove all readings meanwhile poll is only removing the oldest reading.
+        }
+    }
+
+    public synchronized ArrayList<int[]> getReadingHistory(){
+        return new ArrayList<>(readingsHistory);
     }
 
     /**
