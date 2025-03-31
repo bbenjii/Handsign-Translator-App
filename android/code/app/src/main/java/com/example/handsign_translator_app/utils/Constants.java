@@ -1,7 +1,7 @@
 package com.example.handsign_translator_app.utils;
 
 public class Constants {
-    public static final int STABILITY_WINDOW = 10; // Number of readings in sliding window
+    public static final int STABILITY_WINDOW = 100; // Number of readings in sliding window
     public static final int SENSOR_READ_DELAY_MS = 300;
 
     public static final double STABILITY_VARIANCE_THRESHOLD = 15;
