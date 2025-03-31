@@ -111,4 +111,10 @@ public class GestureClassifier {
         // For example:
         return gestureInfoHelper.getGestureAt(index);
     }
+
+    public void close() {
+        if (tflite != null) {
+            tflite.close();
+        }
+    }
 }
