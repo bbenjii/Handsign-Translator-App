@@ -98,7 +98,12 @@ public class GestureController {
                     }
                     // Check if the current gesture (based on recent sensor readings) is stable
 //                    isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
-                    isStable = true;
+                    if(flexReadingsHistory.size() < STABILITY_WINDOW){
+                        isStable = false;
+                    }
+                    else{
+                        isStable = true;
+                    }
                 }
                 if (isStable) {
                     // Convert sensor readings from int[] to float[]

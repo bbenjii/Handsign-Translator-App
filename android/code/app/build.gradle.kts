@@ -36,7 +36,8 @@ android {
 
 dependencies {
 //    implementation 'org.tensorflow:tensorflow-lite:2.9.0'
-    implementation(libs.tensorflow.lite)
+    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.9.0")  // Add this line for TensorFlow Lite Select Ops
+    implementation(libs.tensorflow.lite)  // Keep the general TensorFlow Lite implementation
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

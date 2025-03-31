@@ -67,7 +67,6 @@ public class GesturesActivity extends AppCompatActivity {
 
         // Initialize original meanings map
         initializeOriginalMeanings();
-
         loadGestureImages();
         setupClickListeners();
         setupMoreOptionsMenu();
