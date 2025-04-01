@@ -4,12 +4,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 import tensorflow as tf
 from keras import layers, models
-
+from test_gesture import mock_gesture
+from convert_csv_to_npz import convert_csv_to_npz
 def trainModel():
     """
     Trains a GRU-based model for dynamic gesture recognition using time series data.
     Assumes data is stored in 'gesture_sequence_data.npz' with arrays 'X' and 'y'.
     """
+
+
     # Load dataset from NPZ file
     data = np.load("gesture_sequence_data.npz")
     X = data["X"]  # Shape: (num_samples, time_steps, num_features)
@@ -21,6 +24,8 @@ def trainModel():
     # Encode gesture labels to numerical values
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(y)
+    print("Label encoding order:", label_encoder.classes_)  # 👈 This line shows the mapping
+
     num_classes = len(label_encoder.classes_)
 
     # Normalize sensor readings: reshape to 2D, scale, then reshape back
@@ -62,8 +67,12 @@ def trainModel():
 
 def convert_to_tflite():
     """
-    Converts the trained GRU model into a TensorFlow Lite model.
+    Converts the trained GRU model into a TensorFlow Lite model with adjusted
+    converter settings to handle tensor list ops.
     """
+    import joblib
+    import tensorflow as tf
+
     # Load the trained GRU model, scaler, and label encoder
     gru_model = tf.keras.models.load_model("gesture_gru_model.h5")
     scaler = joblib.load("scaler_gru.pkl")
@@ -71,8 +80,17 @@ def convert_to_tflite():
     print("Loaded GRU model, scaler, and label encoder.")
     print("Gesture classes:", label_encoder.classes_)
 
-    # Convert the Keras model to a TensorFlow Lite model
+    # Set up the TFLite converter
     converter = tf.lite.TFLiteConverter.from_keras_model(gru_model)
+    # Enable select TensorFlow ops for unsupported operations and disable lowering tensor list ops.
+    converter.target_spec.supported_ops = [
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+        tf.lite.OpsSet.SELECT_TF_OPS
+    ]
+    converter._experimental_lower_tensor_list_ops = False
+    converter.experimental_enable_resource_variables = True
+
+    # Convert the model to TFLite format
     tflite_model = converter.convert()
 
     # Save the TensorFlow Lite model
@@ -87,33 +105,52 @@ def predict_gesture(sequence_data):
     Predicts the gesture based on a sequence of sensor readings.
 
     Args:
-        sequence_data (list or np.array): A 2D array with shape (time_steps, num_features)
-            representing sensor readings over time.
+        sequence_data (list of lists): Each inner list represents sensor readings for a time step.
+            Example:
+            [
+                [38, 18, 134, 67, 180, -2.58, -1.77, 4.54, 0.37, -0.39, -0.04],
+                [28, 10, 116, 36, 180, -2.61, -1.86, 4.65, 0.38, -0.35, -0.06],
+                ...,
+                [59, 20, 128, 72, 180, -2.55, -1.92, 4.82, 0.37, -0.33, -0.06]
+            ]
+            Each inner array is one time step. The data is assumed to be already ordered.
+            (Optionally, you can add the time step index as an extra feature.)
 
     Returns:
         str: The predicted gesture label.
     """
+    import numpy as np
+    import joblib
+    import tensorflow as tf
+
     # Load the trained GRU model, scaler, and label encoder
     gru_model = tf.keras.models.load_model("gesture_gru_model.h5")
     scaler = joblib.load("scaler_gru.pkl")
     label_encoder = joblib.load("label_encoder_gru.pkl")
 
-    # Ensure the input is a NumPy array and reshape to match model's expected shape
+    # Convert the input (list of lists) to a NumPy array.
     sequence_array = np.array(sequence_data)
-    if len(sequence_array.shape) == 2:
-        # Add batch dimension: (1, time_steps, num_features)
-        sequence_array = sequence_array.reshape(1, *sequence_array.shape)
-    else:
-        print("Error: Input should be a 2D array with shape (time_steps, num_features).")
+
+    # Optionally, if you want to add the time step index as an extra feature,
+    # uncomment the next two lines. This will add a new first column with indices.
+    # time_indices = np.arange(sequence_array.shape[0]).reshape(-1, 1)
+    # sequence_array = np.hstack((time_indices, sequence_array))
+
+    # Check that we have a 2D array (time_steps, num_features)
+    if sequence_array.ndim != 2:
+        print("Error: Input should be a 2D array where each row is a time step.")
         return None
 
-    # Normalize the input: reshape to 2D for scaling then back to 3D
+    # Add a batch dimension: resulting shape (1, time_steps, num_features)
+    sequence_array = sequence_array.reshape(1, *sequence_array.shape)
+
+    # Normalize the input: reshape to 2D, scale, then reshape back to 3D.
     time_steps, num_features = sequence_array.shape[1:]
     seq_reshaped = sequence_array.reshape(-1, num_features)
     seq_scaled = scaler.transform(seq_reshaped)
     seq_scaled = seq_scaled.reshape(1, time_steps, num_features)
 
-    # Predict gesture probabilities and determine the predicted class
+    # Predict gesture probabilities and choose the most likely class.
     prediction_probs = gru_model.predict(seq_scaled)
     prediction_class = np.argmax(prediction_probs, axis=1)
     predicted_label = label_encoder.inverse_transform(prediction_class)[0]
@@ -122,15 +159,17 @@ def predict_gesture(sequence_data):
 
 
 if __name__ == "__main__":
+    # convert csv o npz
+    # convert_csv_to_npz()
     # First, train the GRU model on your dynamic gesture dataset
-    trainModel()
+    # trainModel()
 
     # Convert the trained model to TensorFlow Lite format for mobile deployment
-    convert_to_tflite()
-
-    # Example prediction:
-    # Create a dummy sequence with shape (time_steps, num_features).
-    # Replace this dummy data with actual sensor readings.
-    dummy_sequence = np.random.rand(100, 11)  # e.g., 100 time steps, 11 features
-    predicted = predict_gesture(dummy_sequence)
+    # convert_to_tflite()
+    #
+    # # Example prediction:
+    # # Create a dummy sequence with shape (time_steps, num_features).
+    # # Replace this dummy data with actual sensor readings.
+    # dummy_sequence = np.random.rand(100, 11)  # e.g., 100 time steps, 11 features
+    predicted = predict_gesture(mock_gesture)
     print(f"Predicted Gesture: {predicted}")
