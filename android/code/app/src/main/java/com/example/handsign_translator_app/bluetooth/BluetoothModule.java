@@ -155,6 +155,7 @@ public class BluetoothModule {
      * Provides simulated sensor data.
      */
     private double[] getMockReadings() {
+
         int finger1 = randomNumber(0,180);
         int finger2 = randomNumber(0,180);
         int finger3 = randomNumber(0,180);
@@ -162,7 +163,7 @@ public class BluetoothModule {
         int finger5 = randomNumber(0,180);
 //        return new int[]{finger1, finger2, finger3, finger4, finger5};
 
-        return new double[]{0,0,0,0,0,-6.89,1.44,6.41,-0.07,0.01,-0.07};
+        return new double[]{180,0,180,180,180,0,0,0,0,0,0};
     }
 
     /**
