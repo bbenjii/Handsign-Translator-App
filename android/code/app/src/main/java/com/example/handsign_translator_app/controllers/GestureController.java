@@ -74,7 +74,7 @@ public class GestureController {
         @Override
         public void run() {
             boolean deviceConnected = bluetoothModule.isDeviceConnected();
-            if (true) {
+            if (deviceConnected) {
                 // Retrieve the latest sensor data from the Bluetooth module
                 double[] currentFlexReadings = bluetoothModule.getGloveData();
                 boolean isStable = false;
