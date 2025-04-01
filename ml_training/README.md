@@ -24,7 +24,7 @@ Before training the model, you need to create a dataset. The `data_generator.py`
    Run the data generator script and copy paste its output to a CSV file:
 
    ```bash
-   python ml_training/data_generator.py > static_gesture_data.csv
+   python ml_training/data_generator.py > gesture_data.csv
    ```
 
    This will generate several sets of 500 readings for each gesture class and print the data in CSV format. You can edit the script if you want to customize the range or the number of samples.

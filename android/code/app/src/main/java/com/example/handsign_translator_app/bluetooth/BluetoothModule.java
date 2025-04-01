@@ -162,7 +162,7 @@ public class BluetoothModule {
         int finger5 = randomNumber(0,180);
 //        return new int[]{finger1, finger2, finger3, finger4, finger5};
 
-        return new double[]{0,0,0,0,0,0.05,0.02,-0.03,0.00,-0.00,-0.00};
+        return new double[]{0,0,0,0,0,-6.89,1.44,6.41,-0.07,0.01,-0.07};
     }
 
     /**

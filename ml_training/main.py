@@ -39,7 +39,7 @@ def convert_to_tflite():
     nn_model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
     # Train the neural network using the same dataset
-    file_path = "static_gesture_data.csv"
+    file_path = "gesture_data.csv"
     df = pd.read_csv(file_path)
     df.columns = df.columns.str.strip()
 
@@ -66,7 +66,7 @@ def convert_to_tflite():
 def trainModel():
 
     # Load dataset
-    file_path = "static_gesture_data.csv"  # Change path if needed
+    file_path = "gesture_data.csv"  # Change path if needed
     df = pd.read_csv(file_path)
 
     # Remove leading spaces in column names (if any)
@@ -138,7 +138,7 @@ def predict_gesture(current_flex_readings):
 
 def plot_diagram():
 
-    df = pd.read_csv('static_gesture_data.csv')
+    df = pd.read_csv('gesture_data.csv')
     df.plot()
     plt.show()
 
