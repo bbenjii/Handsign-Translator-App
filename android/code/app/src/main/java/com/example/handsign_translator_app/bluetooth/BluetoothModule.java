@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 
@@ -118,21 +119,68 @@ public class BluetoothModule {
      * Returns the latest glove data as an array of integers.
      * If no data is available, returns simulated (mock) data.
      */
-    public double[] getGloveData() {
+    // Returns the latest glove data as an array of doubles (for dynamic gestures)
+    // Returns the latest glove data as an array of doubles (for dynamic gestures)
+    public double[] getGloveDataDouble() {
         double[] flexReadings;
         if (!latestData.isEmpty()) {
             try {
                 flexReadings = processSensorData(latestData);
+                if (flexReadings.length > 8) {
+                    double isDynamic = flexReadings[8];
+                    if (isDynamic == 1) {
+                        // If dynamic, return the first 9 readings.
+                        return Arrays.copyOfRange(flexReadings, 0, 9);
+                    } else {
+                        // If not dynamic, obtain static sensor data.
+                        int[] intReadings = getGloveDataInt();
+                        return convertIntArrayToDoubleArray(intReadings);
+                    }
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing sensor data: " + e.getMessage());
                 flexReadings = getMockReadings();
             }
         } else {
-            // If no real data is available, use mock data (useful for debugging)
             flexReadings = getMockReadings();
         }
-        return flexReadings;
+        // Return a default 9-element array if no valid data is found.
+        return new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
     }
+
+    // Helper method to convert an int array to a double array.
+    private double[] convertIntArrayToDoubleArray(int[] intArray) {
+        double[] doubleArray = new double[intArray.length];
+        for (int i = 0; i < intArray.length; i++) {
+            doubleArray[i] = intArray[i];
+        }
+        return doubleArray;
+    }
+
+
+    // Returns the latest glove data as an array of integers (for static gestures)
+    public int[] getGloveDataInt() {
+        if (!latestData.isEmpty()) {
+            try {
+                double[] flexReadings = processSensorData(latestData);
+                if (flexReadings.length > 8) {
+                    double isDynamic = flexReadings[8];
+                    if (isDynamic != 1) {
+                        int[] convertedData = processSensorDataInt(latestData);
+                        if (convertedData.length >= 5) {
+                            return Arrays.copyOfRange(convertedData, 0, 5);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing sensor data: " + e.getMessage());
+            }
+        }
+        // Return a default 5-element array if no valid data is found
+        return new int[]{0, 0, 0, 0, 0};
+    }
+
+
 
     public String getRawData(){
         String data = latestData.toString();
@@ -147,6 +195,14 @@ public class BluetoothModule {
         double[] sensorValues = new double[valueParts.length];
         for (int i = 0; i < valueParts.length; i++) {
             sensorValues[i] =Double.parseDouble(valueParts[i].trim());
+        }
+        return sensorValues;
+    }
+    private int[] processSensorDataInt(String data) {
+        String[] valueParts = data.split(",");
+        int[] sensorValues = new int[valueParts.length];
+        for (int i = 0; i < valueParts.length; i++) {
+            sensorValues[i] =Integer.parseInt(valueParts[i].trim());
         }
         return sensorValues;
     }
