@@ -67,7 +67,7 @@ public class GestureController {
                 double isDynamic = currentFlexReadings[8];
 
                 if (isDynamic == 1.0) {
-                    // ----- Dynamic Gesture Branch -----
+                    // Dynamic branch
                     // For dynamic gestures, use the historical readings and pass the first 8 sensor values as floats.
                     flexReadingsHistory.addLast(currentFlexReadings);
                     if (flexReadingsHistory.size() > STABILITY_WINDOW) {
@@ -92,12 +92,11 @@ public class GestureController {
                         listener.onTranslationInProgress();
                     }
                 } else {
-                    // ----- Static Gesture Branch -----
+                    //static branch
                     // For static gestures, use the first 5 sensor readings as integers.
                     if (staticCurrentFlexReadings != null && staticCurrentFlexReadings.length >= 5) {
                         int[] fiveReadings = new int[5];
                         System.arraycopy(staticCurrentFlexReadings, 0, fiveReadings, 0, 5);
-                        // Pass the int[] to the static ML model.
                         currentGesture = staticClassifier.classifyStaticGesture(fiveReadings);
                         listener.onGestureDetected(currentGesture);
                     } else {

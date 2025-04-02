@@ -120,19 +120,17 @@ public class BluetoothModule {
      * If no data is available, returns simulated (mock) data.
      */
     // Returns the latest glove data as an array of doubles (for dynamic gestures)
+    // Returns the latest glove data as an array of doubles (for dynamic gestures)
     public double[] getGloveDataDouble() {
         double[] flexReadings;
         if (!latestData.isEmpty()) {
             try {
                 flexReadings = processSensorData(latestData);
 
-                // Ensure flexReadings has at least 9 elements before accessing index 8
                 if (flexReadings.length > 8) {
                     double isDynamic = flexReadings[8];
-
-                    // Return data only if dynamic
                     if (isDynamic == 1) {
-                        return Arrays.copyOfRange(flexReadings, 0, 7);
+                        return Arrays.copyOfRange(flexReadings, 0, 9);
                     }
                 }
             } catch (Exception e) {
@@ -142,7 +140,8 @@ public class BluetoothModule {
         } else {
             flexReadings = getMockReadings();
         }
-        return new double[]{0, 0, 0, 0, 0, 0, 0}; // Return default values if no valid data is found
+        // Return a default 9-element array if no valid data is found
+        return new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
     }
 
     // Returns the latest glove data as an array of integers (for static gestures)
@@ -150,18 +149,12 @@ public class BluetoothModule {
         if (!latestData.isEmpty()) {
             try {
                 double[] flexReadings = processSensorData(latestData);
-
-                // Ensure flexReadings has at least 9 elements before accessing index 8
                 if (flexReadings.length > 8) {
                     double isDynamic = flexReadings[8];
-
-                    // Return data only if static
                     if (isDynamic != 1) {
                         int[] convertedData = processSensorDataInt(latestData);
-
-                        // Ensure enough data before slicing
-                        if (convertedData.length >= 4) {
-                            return Arrays.copyOfRange(convertedData, 0, 4);
+                        if (convertedData.length >= 5) {
+                            return Arrays.copyOfRange(convertedData, 0, 5);
                         }
                     }
                 }
@@ -169,9 +162,9 @@ public class BluetoothModule {
                 Log.e(TAG, "Error processing sensor data: " + e.getMessage());
             }
         }
-        return new int[]{0, 0, 0, 0}; // Return default values if no valid data is found
+        // Return a default 5-element array if no valid data is found
+        return new int[]{0, 0, 0, 0, 0};
     }
-
 
 
 
