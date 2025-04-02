@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 
@@ -118,21 +119,61 @@ public class BluetoothModule {
      * Returns the latest glove data as an array of integers.
      * If no data is available, returns simulated (mock) data.
      */
-    public double[] getGloveData() {
+    // Returns the latest glove data as an array of doubles (for dynamic gestures)
+    public double[] getGloveDataDouble() {
         double[] flexReadings;
         if (!latestData.isEmpty()) {
             try {
                 flexReadings = processSensorData(latestData);
+
+                // Ensure flexReadings has at least 9 elements before accessing index 8
+                if (flexReadings.length > 8) {
+                    double isDynamic = flexReadings[8];
+
+                    // Return data only if dynamic
+                    if (isDynamic == 1) {
+                        return Arrays.copyOfRange(flexReadings, 0, 7);
+                    }
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing sensor data: " + e.getMessage());
                 flexReadings = getMockReadings();
             }
         } else {
-            // If no real data is available, use mock data (useful for debugging)
             flexReadings = getMockReadings();
         }
-        return flexReadings;
+        return new double[]{0, 0, 0, 0, 0, 0, 0}; // Return default values if no valid data is found
     }
+
+    // Returns the latest glove data as an array of integers (for static gestures)
+    public int[] getGloveDataInt() {
+        if (!latestData.isEmpty()) {
+            try {
+                double[] flexReadings = processSensorData(latestData);
+
+                // Ensure flexReadings has at least 9 elements before accessing index 8
+                if (flexReadings.length > 8) {
+                    double isDynamic = flexReadings[8];
+
+                    // Return data only if static
+                    if (isDynamic != 1) {
+                        int[] convertedData = processSensorDataInt(latestData);
+
+                        // Ensure enough data before slicing
+                        if (convertedData.length >= 4) {
+                            return Arrays.copyOfRange(convertedData, 0, 4);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing sensor data: " + e.getMessage());
+            }
+        }
+        return new int[]{0, 0, 0, 0}; // Return default values if no valid data is found
+    }
+
+
+
 
     public String getRawData(){
         String data = latestData.toString();
@@ -147,6 +188,14 @@ public class BluetoothModule {
         double[] sensorValues = new double[valueParts.length];
         for (int i = 0; i < valueParts.length; i++) {
             sensorValues[i] =Double.parseDouble(valueParts[i].trim());
+        }
+        return sensorValues;
+    }
+    private int[] processSensorDataInt(String data) {
+        String[] valueParts = data.split(",");
+        int[] sensorValues = new int[valueParts.length];
+        for (int i = 0; i < valueParts.length; i++) {
+            sensorValues[i] =Integer.parseInt(valueParts[i].trim());
         }
         return sensorValues;
     }
