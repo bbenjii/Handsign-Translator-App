@@ -56,6 +56,7 @@ import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 import com.example.handsign_translator_app.controllers.GestureController;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
+import com.example.handsign_translator_app.ml_module.StaticGestureClassifier;
 import com.example.handsign_translator_app.models.Gesture;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -156,8 +157,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         bluetoothModule = new BluetoothModule(getApplicationContext());
         assetManager = getApplicationContext().getAssets();
         gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
+        StaticGestureClassifier staticGestureClassifier = new StaticGestureClassifier(assetManager, getApplicationContext());
         // Pass this activity as the GestureListener so that callbacks can update the UI
-        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, staticGestureClassifier,this);
 
         // Set up bottom navigation view for activity navigation
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
@@ -438,6 +440,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
      */
     @Override
     public void onGestureDetected(Gesture gesture) {
+
+        if (gesture == null) {
+            Log.e("GestureController", "Null gesture detected!");
+            return;
+        }
+
         runOnUiThread(() -> {
             String newTranslation = gesture.getTranslation();
             // Update text view with the new translation
