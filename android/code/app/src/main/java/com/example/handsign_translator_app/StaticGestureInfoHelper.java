@@ -5,12 +5,10 @@ import static android.content.Context.MODE_PRIVATE;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
-import android.graphics.drawable.Drawable;
 
-import com.example.handsign_translator_app.models.Gesture;
+import com.example.handsign_translator_app.models.StaticGesture;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,23 +17,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GestureInfoHelper {
-    // List to hold Gesture objects loaded from CSV data.
-    private List<Gesture> gestures;
+public class StaticGestureInfoHelper {
+    // List to hold StaticGesture objects loaded from CSV data.
+    private List<StaticGesture> gestures;
     private SharedPreferences gesturePrefs;
     private static final String PREFS_NAME = "gesture_mappings";
     private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
 
-
     /**
      * Constructor loads gesture information from a CSV file using the provided AssetManager.
      */
-    public GestureInfoHelper(AssetManager assetManager, Context context) {
+    public StaticGestureInfoHelper(AssetManager assetManager, Context context) {
         gestures = new ArrayList<>();
         gesturePrefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         // CSV file name and delimiter definition
-        String csvFile = "gesture_info.csv";
+        String csvFile = "gesture_info_static.csv";
         String line;
         String delimiter = ", ";
 
@@ -68,9 +65,8 @@ public class GestureInfoHelper {
                 String customKey = KEY_CUSTOM_PREFIX + label;
                 String customTranslation = gesturePrefs.getString(customKey, "");
 
-
-                // Create a new Gesture object and add it to the list
-                gestures.add(new Gesture(translation, imagePath, label, customTranslation));
+                // Create a new StaticGesture object and add it to the list
+                gestures.add(new StaticGesture(translation, imagePath, label, customTranslation));
             }
         }
         catch(IOException e) {
@@ -80,19 +76,22 @@ public class GestureInfoHelper {
         }
     }
 
-    public List<Gesture> getGestures(){
+    /**
+     * Returns the complete list of static gestures.
+     */
+    public List<StaticGesture> getGestures(){
         return gestures;
     }
 
     /**
-     * Retrieves the Gesture at the specified index from the list.
-     * return the Gesture if index is valid; otherwise, a default "Unknown Gesture".
+     * Retrieves the StaticGesture at the specified index from the list.
+     * @return the StaticGesture if index is valid; otherwise, a default "Unknown Gesture".
      */
-    public Gesture getGestureAt(int index) {
+    public StaticGesture getGestureAt(int index) {
         if (index >= 0 && index < gestures.size()) {
             return gestures.get(index);
         }
-        // Return a default gesture if index is out of bounds
-        return new Gesture("Unknown Gesture", "default_image.png", "unknown");
+        // Return a default static gesture if index is out of bounds
+        return new StaticGesture("Unknown Gesture", "default_image.png", "unknown");
     }
 }
