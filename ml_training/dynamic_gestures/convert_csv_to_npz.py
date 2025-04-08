@@ -4,9 +4,9 @@ import numpy as np
 
 def convert_csv_to_npz():
     # Load the CSV file containing the time-series data
-    df = pd.read_csv("dynamic_gesture_dataset_generated.csv")
+    # df = pd.read_csv("dynamic_gesture_dataset_generated.csv")
 
-    # df = pd.read_csv("dynamic_gesture_dataset.csv")
+    df = pd.read_csv("dynamic_gesture_dataset.csv")
 
     # For example, assume the CSV has the following columns:
     # sample_id,time,sensor1,sensor2, ..., sensor11, label
@@ -20,15 +20,17 @@ def convert_csv_to_npz():
     labels = []
 
     # # Determine the sensor columns (adjust this list as needed)
-    sensor_cols = [col for col in df.columns if col.startswith("sensor")]
+    sensor_cols = [col for col in df.columns if col.startswith("sensor") and "accel" not in col]
+    # sensor_cols = [col for col in df.columns if col.startswith("sensor")]
     print(f"Sensor columns: {sensor_cols}")
-
 
     for label, group in groups:
         print(f"Processing label: {label}")
         # print(f"Processing \n{group}")
         # # Sort the group by time (if the CSV isn't already ordered)
         group = group.sort_values(by="timestamp")
+        if len(group) != 100:
+            continue
         # # Convert the sensor readings for this sample to a 2D NumPy array of shape (time_steps, num_features)
         sequence = group[sensor_cols].to_numpy()
         sequences.append(sequence)
@@ -45,7 +47,8 @@ def convert_csv_to_npz():
     np.savez("gesture_sequence_data.npz", X=X, y=y)
     print("Data saved in gesture_sequence_data.npz")
 
-
+# convert_csv_to_npz()
+# convert_csv_to_npz()
 def synthetic_data():
     # Generating a synthetic CSV file for gesture training data
 

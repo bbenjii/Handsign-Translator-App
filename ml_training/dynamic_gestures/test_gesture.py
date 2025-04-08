@@ -104,6 +104,6 @@ mock_gesture = [[38,18,134,67,180,-2.58,-1.77,4.54,0.37,-0.39,-0.04],
 
 mock_gesture2 = []
 for i in range(0,100):
-    mock_gesture2.append([0,0,0,0,0,-6.89,1.44,6.41,-0.07,0.01,-0.07])
+    mock_gesture2.append([0,0,0,0,0,-0.03,-0.04,-0.02])
 
 mock_gesture = mock_gesture2
