@@ -74,7 +74,7 @@ public class GestureController {
         @Override
         public void run() {
             boolean deviceConnected = bluetoothModule.isDeviceConnected();
-//            deviceConnected = true;
+            deviceConnected = true;
             if (deviceConnected){
 
 //                if(true){
