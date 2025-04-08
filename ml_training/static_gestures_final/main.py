@@ -39,7 +39,7 @@ def convert_to_tflite():
     nn_model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
     # Train the neural network using the same dataset
-    file_path = "static_gesture_data.csv"
+    file_path = "dataset.csv"
     df = pd.read_csv(file_path)
     df.columns = df.columns.str.strip()
 
@@ -66,7 +66,7 @@ def convert_to_tflite():
 def trainModel():
 
     # Load dataset
-    file_path = "static_gesture_data.csv"  # Change path if needed
+    file_path = "dataset.csv"  # Change path if needed
     df = pd.read_csv(file_path)
 
     # Remove leading spaces in column names (if any)
@@ -83,7 +83,6 @@ def trainModel():
     # Normalize sensor readings (scale between 0 and 1)
     scaler = MinMaxScaler()
     X_scaled = scaler.fit_transform(X)
-
     # Split data into training (80%) and testing (20%) sets
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_encoded, test_size=0.2, random_state=42)
 
@@ -97,7 +96,7 @@ def trainModel():
     # Evaluate accuracy
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Random Forest Model Accuracy: {accuracy * 100:.2f}%")
-    return
+
     # Save trained model and label encoder
     joblib.dump(rf_model, "gesture_random_forest.pkl")
     joblib.dump(label_encoder, "label_encoder.pkl")
@@ -144,9 +143,7 @@ def plot_diagram():
 
 # plot_diagram()
 
-sample_reading = [0, 180, 180, 180, 180]  # Replace with real sensor values
-predicted_gesture = predict_gesture(sample_reading)
-print(f"Predicted Gesture: {predicted_gesture}")
+
 # print(label_encoder.classes_)
 # trainModel()
 
@@ -155,4 +152,8 @@ if __name__ == '__main__':
     trainModel()
 
     #then convert to tflite
-    # convert_to_tflite()
+    convert_to_tflite()
+
+    sample_reading = [180, 0, 180, 180, 180]  # Replace with real sensor values
+    predicted_gesture = predict_gesture(sample_reading)
+    print(f"Predicted Gesture: {predicted_gesture}")
