@@ -1,5 +1,3 @@
 index, label, translation, path
-0, 1, one, hand_signs_images/asl_numbers/001.png
-1, 5, five, hand_signs_images/asl_numbers/005.png
-2, dynamic_no, no, hand_signs_images/dynamic_gestures/dynamic_no.png
-3, dynamic_wave, hi, hand_signs_images/dynamic_gestures/dynamic_wave.png
+0, 5, five, hand_signs_images/asl_numbers/005.png
+1, dynamic_wave, hi, hand_signs_images/dynamic_gestures/dynamic_wave.png

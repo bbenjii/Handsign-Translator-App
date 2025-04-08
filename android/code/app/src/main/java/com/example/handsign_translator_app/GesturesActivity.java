@@ -27,6 +27,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -42,6 +43,7 @@ import java.util.Map;
 
 public class GesturesActivity extends AppCompatActivity {
 
+    
     private TextView titleGestures;
     private ImageButton buttonMoreOptions;
     private BottomNavigationView bottomNavigationView;
