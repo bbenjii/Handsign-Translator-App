@@ -12,15 +12,17 @@ import tensorflow as tf
 import keras
 from keras import layers
 
+import os
+
 def convert_to_tflite():
     """
     Converts the trained Random Forest model into a TensorFlow Lite model
     by first converting it into a neural network equivalent.
     """
     # Load the trained Random Forest model, scaler, and label encoder
-    rf_model = joblib.load("gesture_random_forest.pkl")
-    scaler = joblib.load("scaler.pkl")
-    label_encoder = joblib.load("label_encoder.pkl")
+    rf_model = joblib.load("model_files/gesture_random_forest.pkl")
+    scaler = joblib.load("model_files/scaler.pkl")
+    label_encoder = joblib.load("model_files/label_encoder.pkl")
     print(label_encoder.classes_)
 
     # Generate synthetic input data for defining the NN model
@@ -39,7 +41,7 @@ def convert_to_tflite():
     nn_model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
     # Train the neural network using the same dataset
-    file_path = "dataset.csv"
+    file_path = "data_processing/dataset.csv"
     df = pd.read_csv(file_path)
     df.columns = df.columns.str.strip()
 
@@ -57,17 +59,19 @@ def convert_to_tflite():
     tflite_model = converter.convert()
 
     # Save the TensorFlow Lite model
-    tflite_model_path = "gesture_model.tflite"
+    tflite_model_path = "model_files/gesture_model.tflite"
     with open(tflite_model_path, "wb") as f:
         f.write(tflite_model)
 
     print(f"TensorFlow Lite model saved as {tflite_model_path}")
 
 def trainModel():
+    print(os.getcwd())
 
     # Load dataset
-    file_path = "dataset.csv"  # Change path if needed
+    file_path = "data_processing/dataset.csv"  # Change path if needed
     df = pd.read_csv(file_path)
+
 
     # Remove leading spaces in column names (if any)
     df.columns = df.columns.str.strip()
@@ -98,9 +102,9 @@ def trainModel():
     print(f"Random Forest Model Accuracy: {accuracy * 100:.2f}%")
 
     # Save trained model and label encoder
-    joblib.dump(rf_model, "gesture_random_forest.pkl")
-    joblib.dump(label_encoder, "label_encoder.pkl")
-    joblib.dump(scaler, "scaler.pkl")
+    joblib.dump(rf_model, "model_files/gesture_random_forest.pkl")
+    joblib.dump(label_encoder, "model_files/label_encoder.pkl")
+    joblib.dump(scaler, "model_files/scaler.pkl")
 
     print("Model saved as gesture_random_forest.pkl")
 
@@ -117,9 +121,9 @@ def predict_gesture(current_flex_readings):
     """
 
     # Load saved model, label encoder, and scaler
-    rf_model = joblib.load("gesture_random_forest.pkl")
-    label_encoder = joblib.load("label_encoder.pkl")
-    scaler = joblib.load("scaler.pkl")
+    rf_model = joblib.load("model_files/gesture_random_forest.pkl")
+    label_encoder = joblib.load("model_files/label_encoder.pkl")
+    scaler = joblib.load("model_files/scaler.pkl")
 
     # Convert input to a NumPy array and reshape for model
     flex_array = np.array(current_flex_readings).reshape(1, -1)
@@ -154,6 +158,6 @@ if __name__ == '__main__':
     #then convert to tflite
     convert_to_tflite()
 
-    sample_reading = [180, 0, 180, 180, 180]  # Replace with real sensor values
-    predicted_gesture = predict_gesture(sample_reading)
-    print(f"Predicted Gesture: {predicted_gesture}")
+    # sample_reading = [0, 0, 0, 0, 0]  # Replace with real sensor values
+    # predicted_gesture = predict_gesture(sample_reading)
+    # print(f"Predicted Gesture: {predicted_gesture}")

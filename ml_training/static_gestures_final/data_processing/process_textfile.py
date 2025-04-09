@@ -23,4 +23,4 @@ def convert_label(labelname):
             file.write(line + "\n")
 
 # Example usage:
-convert_label("wave")
+convert_label("2")
