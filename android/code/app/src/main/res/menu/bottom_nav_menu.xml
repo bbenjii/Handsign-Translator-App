@@ -11,6 +11,10 @@
         android:icon="@drawable/gesture_icon"
         android:title="Gestures" />
     <item
+        android:id="@+id/learning"
+        android:icon="@drawable/learning_icon"
+        android:title="Learn" />
+    <item
         android:id="@+id/settings"
         android:icon="@drawable/settings_icon"
         android:title="Settings" />

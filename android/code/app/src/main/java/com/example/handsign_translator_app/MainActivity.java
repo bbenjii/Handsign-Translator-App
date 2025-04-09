@@ -228,6 +228,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             } else if (item.getItemId() == R.id.gestures) {
                 navigateToGesturesActivity();
                 return true;
+            } else if (item.getItemId() == R.id.learning) {
+                navigateToLearningActivity();
+                return true;
             }
             return false;
         });
@@ -629,6 +632,14 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
      */
     private void navigateToGesturesActivity() {
         Intent intent = new Intent(this, GesturesActivity.class);
+        startActivity(intent);
+    }
+
+    /**
+     * Navigates to the Learning Activity.
+     */
+    private void navigateToLearningActivity() {
+        Intent intent = new Intent(this, LearningActivity.class);
         startActivity(intent);
     }
 

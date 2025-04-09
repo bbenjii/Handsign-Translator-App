@@ -55,6 +55,9 @@ public class SettingActivity extends AppCompatActivity {
             else if (item.getItemId() == R.id.gestures) {
                 navigateToGesturesActivity();
                 return true; // Event handled
+            } else if (item.getItemId() == R.id.learning) {
+                navigateToLearningActivity();
+                return true;
             }
             return false; // Event not handled
         });
@@ -68,6 +71,14 @@ public class SettingActivity extends AppCompatActivity {
 
     private void navigateToGesturesActivity() {
         Intent intent = new Intent(this, GesturesActivity.class);
+        startActivity(intent);
+    }
+
+    /**
+     * Navigates to the Learning Activity.
+     */
+    private void navigateToLearningActivity() {
+        Intent intent = new Intent(this, LearningActivity.class);
         startActivity(intent);
     }
 
