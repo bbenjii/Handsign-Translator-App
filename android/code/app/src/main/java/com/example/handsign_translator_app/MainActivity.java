@@ -257,7 +257,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     muted = !muted;
                     if(muted) {buttonSpeaker.setImageResource(R.drawable.volume_off_logo);}
                     else{buttonSpeaker.setImageResource(R.drawable.speaker_logo);}
-
+                }
+                else if (item.getItemId() == R.id.textToAsl) {
+                    navigateToTextToASLActivity();
+                    return true;
                 }
                 return false;
             });
@@ -265,6 +268,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         });
     }
 
+    private void navigateToTextToASLActivity() {
+        Intent intent = new Intent(this, TextToASLActivity.class);
+        startActivity(intent);
+    }
 
     // Method to enable or disable Bluetooth
     @SuppressLint("RestrictedApi")

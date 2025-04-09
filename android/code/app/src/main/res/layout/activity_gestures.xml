@@ -45,9 +45,12 @@
         android:id="@+id/gesture_scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:contentDescription="Scrollable list of customizable gestures"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/header_layout"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView">
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_layout">
 
         <GridLayout
             android:id="@+id/gesture_grid"
@@ -75,27 +78,27 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="140dp"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_1"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture One"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture One"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="one"
+                        android:ellipsize="end"
                         android:gravity="center"
                         android:maxLines="2"
-                        android:ellipsize="end"/>
+                        android:text="one" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -116,27 +119,27 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="140dp"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_2"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Two"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Two"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_2"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="two"
+                        android:ellipsize="end"
                         android:gravity="center"
                         android:maxLines="2"
-                        android:ellipsize="end"/>
+                        android:text="two" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -157,17 +160,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_3"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Three"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Three"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_3"
@@ -175,7 +178,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="three"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -196,17 +199,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_4"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Four"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Four"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_4"
@@ -214,7 +217,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="four"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -235,17 +238,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_5"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Five"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Five"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_5"
@@ -253,7 +256,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="five"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -274,17 +277,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_6"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Six"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Six"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_6"
@@ -292,7 +295,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="six"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -313,17 +316,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_7"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Seven"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Seven"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_7"
@@ -331,7 +334,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="seven"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -352,17 +355,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_8"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Eight"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Eight"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_8"
@@ -370,7 +373,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="eight"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -391,17 +394,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_9"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Nine"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Nine"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_9"
@@ -409,7 +412,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="nine"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -430,17 +433,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_10"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Ten"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Ten"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_10"
@@ -448,7 +451,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="ten"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -469,17 +472,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_y"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture Y"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture Y"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_y"
@@ -487,7 +490,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="Y"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
