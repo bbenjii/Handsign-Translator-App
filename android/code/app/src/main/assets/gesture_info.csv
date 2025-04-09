@@ -1,5 +1,6 @@
 index, label, translation, path
 0, 1, one, hand_signs_images/asl_numbers/001.png
+9, 10, ten, hand_signs_images/asl_numbers/010.png
 1, 2, two, hand_signs_images/asl_numbers/002.png
 2, 3, three, hand_signs_images/asl_numbers/003.png
 3, 4, four, hand_signs_images/asl_numbers/004.png
@@ -8,3 +9,4 @@ index, label, translation, path
 6, 7, seven, hand_signs_images/asl_numbers/007.png
 7, 8, eight, hand_signs_images/asl_numbers/008.png
 8, 9, nine, hand_signs_images/asl_numbers/009.png
+10, y, Y, hand_signs_images/asl_alphabet/Y.png

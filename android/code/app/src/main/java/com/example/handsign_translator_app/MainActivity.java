@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private BottomNavigationView bottomNavigationView;
     private AssetManager assetManager;
 
+
     // Text-to-Speech engine and state flag for loading animation
     private TextToSpeech tts;
     private boolean loading = false;
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private GestureController gestureController;
     private GestureClassifier gestureClassifier;
     private BluetoothModule bluetoothModule;
-    private boolean muted = false;
+    private boolean muted;
     BluetoothAdapter mBluetoothAdapter;
 
     private List<BluetoothDevice> mBTDevices = new ArrayList<>(); //List to store discover devices
@@ -127,10 +128,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
 //        super.onStart();
         // Start and bind to the service.
-        Intent serviceIntent = new Intent(this, BluetoothService.class);
-        startService(serviceIntent); // This makes the service live beyond activity binding.
-        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+//        Intent serviceIntent = new Intent(this, BluetoothService.class);
+//        startService(serviceIntent); // This makes the service live beyond activity binding.
+//        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+//        setUp();
+
     }
+
+
 
     @Override
     protected void onStart() {
@@ -146,15 +152,59 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onResume() {
         super.onResume();
-        // Start gesture detection when activity resumes
-
+//        if (gestureController != null) {
+//            gestureController.start();
+//        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         // Stop gesture detection when activity is paused
-//        gestureController.stop();
+
+        muted = true;
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        if (gestureClassifier != null) {
+            gestureClassifier.close();
+        }
+
+        if (gestureController != null) {
+            gestureController.stop();
+//            gestureController.setGestureListener(null);
+        }
+
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(serviceConnection);
+        isBound = false;
+    }
+
+
+    /**
+     * Ensures proper shutdown of TTS and closing of resources.
+     */
+    @Override
+    protected void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        if (gestureClassifier != null) {
+            gestureClassifier.close();
+        }
+
+        if (gestureController != null) {
+            gestureController.stop();
+//            gestureController.setGestureListener(null);
+        }
+        super.onDestroy();
     }
 
     /**
@@ -169,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         imageHandSign = findViewById(R.id.image_hand_sign);
         buttonHistory = findViewById(R.id.button_history);
         buttonMoreOptions = findViewById(R.id.button_more_options);
-
+        muted = false;
         popUpBT();
 
         buttonSpeaker = findViewById(R.id.button_speaker);
@@ -485,8 +535,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             clearLoadingAnimation();
             // Update the image view with the gesture image
             setGestureImageView(gesture);
-
-
         });
     }
 
@@ -607,35 +655,48 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
      * Navigates to the Settings Activity.
      */
     private void navigateToSettingsActivity() {
+        tts.stop();
+        tts.shutdown();
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
+        finish();
+
     }
 
     /**
      * Navigates to the Gestures Activity.
      */
     private void navigateToGesturesActivity() {
+        tts.stop();
+        tts.shutdown();
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
         Intent intent = new Intent(this, GesturesActivity.class);
         startActivity(intent);
+        finish();
+
     }
 
     /**
      * Navigates to the Learning Activity.
      */
     private void navigateToLearningActivity() {
-        Intent intent = new Intent(this, LearningActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Ensures proper shutdown of TTS and closing of resources.
-     */
-    @Override
-    protected void onDestroy() {
+        tts.stop();
+        tts.shutdown();
         if (tts != null) {
+            tts.stop();
             tts.shutdown();
         }
-//        gestureClassifier.close();
-        super.onDestroy();
+        Intent intent = new Intent(this, LearningActivity.class);
+        startActivity(intent);
+        finish();
     }
+
+
 }
