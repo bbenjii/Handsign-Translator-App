@@ -132,4 +132,8 @@ public class GestureController {
         }
         return floatArray;
     }
+
+    public void resetFlexReadingHistory(){
+        flexReadingsHistory = new ArrayDeque<>();
+    }
 }

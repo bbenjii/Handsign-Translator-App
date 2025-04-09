@@ -2,11 +2,15 @@ package com.example.handsign_translator_app;
 
 import static android.view.View.INVISIBLE;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
@@ -23,12 +27,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.handsign_translator_app.bluetooth.BluetoothModule;
+import com.example.handsign_translator_app.controllers.GestureController;
+import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.models.Gesture;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
+import java.util.Objects;
 
-public class LearningActivity extends AppCompatActivity {
+public class LearningActivity extends AppCompatActivity implements GestureController.GestureListener{
 
     private TextView titleLearning;
     private ImageButton buttonMoreOptions;
@@ -51,11 +59,85 @@ public class LearningActivity extends AppCompatActivity {
     private final int defaultNextButtonColor =  Color.parseColor("#90A4AE");
 
     private GestureInfoHelper gestureInfoHelper;
-    List<Gesture> all_gestures;
-    AssetManager assetManager;
+    private List<Gesture> all_gestures;
+    private Gesture instructedGesture;
+    private AssetManager assetManager;
 
 
+    // Controller, classifier, and bluetooth module instances
+    private GestureController gestureController;
+    private GestureClassifier gestureClassifier;
+    private BluetoothModule bluetoothModule;
+    private BluetoothService bluetoothService;
+    private boolean isBound = false;
     private BottomNavigationView bottomNavigationView;
+
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            bluetoothService = binder.getService();
+            bluetoothModule = bluetoothService.getBluetoothModule();
+            isBound = true;
+
+            setUp();
+            nextGesture();
+            defaultFrame();
+            gestureController.start();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
+
+    /**
+     * Callback from GestureController when a new gesture is detected.
+     * Updates UI and speaks new translation if it has changed.
+     */
+    @Override
+    public void onGestureDetected(Gesture gesture) {
+        runOnUiThread(() -> {
+            Boolean correct = Objects.equals(gesture.getLabel(), instructedGesture.getLabel());
+
+            if(correct){
+                correctFrame();
+            }
+            else{
+                incorrectFrame();
+            }
+
+        });
+    }
+
+    @Override
+    public void rawDataOutput(String data) {
+        // Update UI with loading animation and message
+//        setGestureImageView("lebronjames.png");
+        // Clear any loading animation
+//        clearLoadingAnimation();        textTranslatedOutput.setText(data);
+    }
+
+    /**
+     * Callback from GestureController when gesture translation is in progress.
+     * Updates UI to indicate translation is ongoing.
+     */
+    @Override
+    public void onTranslationInProgress() {
+        // Update UI with loading animation and message
+//        setLoadingAnimation();
+//        textTranslatedOutput.setText("Translating...");
+    }
+
+    @Override
+    public void onNoDeviceConnected() {
+//        setLoadingAnimation();
+//        textTranslatedOutput.setText("No device connected...");
+    }
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,9 +150,15 @@ public class LearningActivity extends AppCompatActivity {
             return insets;
         });
 
-        setUp();
-        nextGesture();
-        defaultFrame();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Start and bind to the service.
+        Intent serviceIntent = new Intent(this, BluetoothService.class);
+        startService(serviceIntent); // This makes the service live beyond activity binding.
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
     }
 
@@ -89,15 +177,15 @@ public class LearningActivity extends AppCompatActivity {
             nextGesture();
             defaultFrame();
 
-            if(frameUp){
-                correctFrame();
-//                slideFrameDown();
-            }
-            else{
-                incorrectFrame();
-//                slideFrameUp();
-            }
-            frameUp = !frameUp;
+//            if(frameUp){
+//                correctFrame();
+////                slideFrameDown();
+//            }
+//            else{
+//                incorrectFrame();
+////                slideFrameUp();
+//            }
+//            frameUp = !frameUp;
 
         });
 
@@ -111,6 +199,10 @@ public class LearningActivity extends AppCompatActivity {
         gestureInfoHelper = new GestureInfoHelper(assetManager, getApplicationContext());
 
         all_gestures = gestureInfoHelper.getGestures();
+
+        gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
+        // Pass this activity as the GestureListener so that callbacks can update the UI
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
 
 
         // Bottom Navigation
@@ -197,9 +289,10 @@ public class LearningActivity extends AppCompatActivity {
     }
     private void nextGesture(){
         int gestureIndex = getRandomGestureIndex(all_gestures.size());
-        Gesture gesture = all_gestures.get(gestureIndex);
-        textViewInstructedGesture.setText(gesture.getTranslation());
-        imageViewUserGesture.setImageDrawable(gesture.getImage());
+        instructedGesture = all_gestures.get(gestureIndex);
+        textViewInstructedGesture.setText(instructedGesture.getTranslation());
+        imageViewUserGesture.setImageDrawable(instructedGesture.getImage());
+        gestureController.resetFlexReadingHistory();
     }
 
     private void navigateToMainActivity() {
@@ -225,4 +318,6 @@ public class LearningActivity extends AppCompatActivity {
         Intent intent = new Intent(this, LearningActivity.class);
         startActivity(intent);
     }
+
+
 }

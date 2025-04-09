@@ -17,12 +17,14 @@ import android.content.Context;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-
+import android.content.ServiceConnection;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.IBinder;
 import java.io.IOException;
 
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -91,6 +93,26 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     // Used to track the last translation spoken to prevent repeated TTS
     private String lastSpokenTranslation = "";
 
+    private BluetoothService bluetoothService;
+    private boolean isBound = false;
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            bluetoothService = binder.getService();
+            bluetoothModule = bluetoothService.getBluetoothModule();
+            isBound = true;
+
+            setUp();
+            gestureController.start();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,14 +125,28 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             return insets;
         });
 
-        setUp();
+//        super.onStart();
+        // Start and bind to the service.
+        Intent serviceIntent = new Intent(this, BluetoothService.class);
+        startService(serviceIntent); // This makes the service live beyond activity binding.
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Start and bind to the service.
+        Intent serviceIntent = new Intent(this, BluetoothService.class);
+        startService(serviceIntent); // This makes the service live beyond activity binding.
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+    }
+
 
     @Override
     protected void onResume() {
         super.onResume();
         // Start gesture detection when activity resumes
-        gestureController.start();
 
     }
 
@@ -153,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         tts = new TextToSpeech(this, this);
 
         // Instantiate Bluetooth module, asset manager, gesture classifier, and gesture controller
-        bluetoothModule = new BluetoothModule(getApplicationContext());
         assetManager = getApplicationContext().getAssets();
         gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
         // Pass this activity as the GestureListener so that callbacks can update the UI
