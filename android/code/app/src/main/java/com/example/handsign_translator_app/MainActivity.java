@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     protected void onPause() {
         super.onPause();
         // Stop gesture detection when activity is paused
-        gestureController.stop();
+//        gestureController.stop();
     }
 
     /**
@@ -635,7 +635,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         if (tts != null) {
             tts.shutdown();
         }
-        gestureClassifier.close();
+//        gestureClassifier.close();
         super.onDestroy();
     }
 }
