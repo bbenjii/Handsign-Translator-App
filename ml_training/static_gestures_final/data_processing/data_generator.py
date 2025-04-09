@@ -1,5 +1,5 @@
 from random import randint
-
+import os
 
 def bent():
     return randint(90, 180)
@@ -100,4 +100,5 @@ def generate_readings():
         print(f'{thumb}, {index}, {middle}, {ring}, {pinky}, Y')
 
 
-generate_readings()
+# generate_readings()
+print(os.getcwd())
