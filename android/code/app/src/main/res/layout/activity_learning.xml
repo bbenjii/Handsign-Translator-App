@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -59,6 +58,7 @@
             android:layout_marginTop="32dp"
             android:text="Sign the following"
             android:textColor="#8A8A8A"
+            android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/exerciseFrame" />
@@ -70,7 +70,7 @@
             android:layout_marginTop="50dp"
             android:gravity="center"
             android:text="gesture 2"
-            android:textSize="16sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -89,6 +89,7 @@
             app:srcCompat="@drawable/speaker_logo" />
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/cardView"
             android:layout_width="300dp"
             android:layout_height="300dp"
             android:layout_marginTop="16dp"
@@ -100,14 +101,54 @@
             <ImageView
                 android:id="@+id/imageViewUserGesture"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:scaleType="centerInside"
                 app:srcCompat="@drawable/loading_icon" />
         </androidx.cardview.widget.CardView>
+
+        <FrameLayout
+            android:id="@+id/frame_slide_up"
+            android:layout_width="match_parent"
+            android:layout_height="130dp"
+            android:background="#E57373"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/textViewResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="50dp"
+                android:layout_marginTop="8dp"
+                android:text="Correct!"
+                android:textSize="20sp" />
+        </FrameLayout>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardViewNextButton"
+            android:layout_width="300dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="@color/blue_gray_400"
+            app:cardCornerRadius="10dp"
+            app:cornerRadius="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <Button
+                android:id="@+id/button_next_gesture"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:backgroundTint="#00FFFFFF"
+                android:text="NEXT"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                app:cornerRadius="10dp" />
+        </androidx.cardview.widget.CardView>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 
 
     <!-- Bottom Navigation Bar (consistent with other activities) -->
@@ -118,7 +159,7 @@
         android:layout_marginBottom="16dp"
         android:background="#00263238"
         app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_menu"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/bottom_nav_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

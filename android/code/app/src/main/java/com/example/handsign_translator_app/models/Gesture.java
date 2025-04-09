@@ -1,5 +1,7 @@
 package com.example.handsign_translator_app.models;
 
+import android.graphics.drawable.Drawable;
+
 /**
  * Model class representing a Gesture.
  * Contains information such as the translated text and the associated image path.
@@ -9,6 +11,7 @@ public class Gesture {
     private final String translation;
     // Path to the image resource that represents the gesture visually
     private final String imagePath;
+    private final Drawable image;
     private final String label;
 
     private final String customTranslation;
@@ -21,6 +24,7 @@ public class Gesture {
         this.imagePath = imagePath;
         this.customTranslation = "";
         this.label = label;
+        this.image = null;
 
     }
 
@@ -32,6 +36,15 @@ public class Gesture {
         this.imagePath = imagePath;
         this.customTranslation = customTranslation;
         this.label = label;
+        this.image = null;
+    }
+
+    public Gesture(String translation, String imagePath, String label, String customTranslation, Drawable image) {
+        this.translation = translation;
+        this.imagePath = imagePath;
+        this.customTranslation = customTranslation;
+        this.label = label;
+        this.image = image;
 
     }
 
@@ -52,4 +65,6 @@ public class Gesture {
     public String getImagePath() {
         return imagePath;
     }
+
+    public Drawable getImage(){return image;}
 }

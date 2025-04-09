@@ -96,12 +96,12 @@ public class GesturesActivity extends AppCompatActivity {
     private void loadGestureImages() {
         try {
             for (Gesture gesture : all_gestures) {
-                String path = gesture.getImagePath();
-                InputStream ims = assetManager.open(path);
-                Drawable d = Drawable.createFromStream(ims, null);
+//                String path = gesture.getImagePath();
+//                InputStream ims = assetManager.open(path);
+//                Drawable d = Drawable.createFromStream(ims, null);
 
                 ImageView imageView = findViewById(getResources().getIdentifier("gesture_image_" + gesture.getLabel(), "id", getPackageName()));
-                imageView.setImageDrawable(d);
+                imageView.setImageDrawable(gesture.getImage());
 
                 TextView labelView = findViewById(getResources().getIdentifier("gesture_label_" + gesture.getLabel(), "id", getPackageName()));
                 String customKey = KEY_CUSTOM_PREFIX + gesture.getLabel();
@@ -111,7 +111,7 @@ public class GesturesActivity extends AppCompatActivity {
                 labelView.setText(customMeaning);
             }
 
-        } catch (IOException e) {
+        } catch  (Exception e) {
             e.printStackTrace();
         }
     }
