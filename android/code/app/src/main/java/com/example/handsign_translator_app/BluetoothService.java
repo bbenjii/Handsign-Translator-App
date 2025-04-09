@@ -10,6 +10,7 @@ import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 public class BluetoothService extends Service {
     private final IBinder binder = new LocalBinder();
     private BluetoothModule bluetoothModule;
+    private String serviceName;
 
     public class LocalBinder extends Binder {
         public BluetoothService getService() {

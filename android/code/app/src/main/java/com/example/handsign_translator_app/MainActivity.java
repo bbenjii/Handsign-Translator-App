@@ -2,30 +2,35 @@ package com.example.handsign_translator_app;
 
 // Import necessary packages and classes
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-
+import android.content.ServiceConnection;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.IBinder;
 import java.io.IOException;
 
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
@@ -52,12 +57,11 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 import com.example.handsign_translator_app.controllers.GestureController;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
+import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
 import com.example.handsign_translator_app.models.Gesture;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener, GestureController.GestureListener {
-
-    private static final String TAG = "MainActivity";
 
     // UI element declarations
     private TextView titleTranslate;
@@ -75,37 +79,37 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private TextToSpeech tts;
     private boolean loading = false;
 
-    // Controller, classifier, and bluetooth service instances
+    // Controller, classifier, and bluetooth module instances
     private GestureController gestureController;
     private GestureClassifier gestureClassifier;
-    private BluetoothService bluetoothService;
-    private boolean isServiceBound = false;
+    private BluetoothModule bluetoothModule;
     private boolean muted = false;
     BluetoothAdapter mBluetoothAdapter;
 
     private List<BluetoothDevice> mBTDevices = new ArrayList<>(); //List to store discover devices
     private ArrayAdapter<String> mDeviceListAdapter; //Used to list device info in the listview
 
+
     // Used to track the last translation spoken to prevent repeated TTS
     private String lastSpokenTranslation = "";
 
-    // Service connection for binding to BluetoothService
-    private final ServiceConnection serviceConnection = new ServiceConnection() {
+    private BluetoothService bluetoothService;
+    private boolean isBound = false;
+    private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
+        public void onServiceConnected(ComponentName name, IBinder service) {
             BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
             bluetoothService = binder.getService();
-            isServiceBound = true;
+            bluetoothModule = bluetoothService.getBluetoothModule();
+            isBound = true;
 
-            // Initialize the gesture controller with the BluetoothModule from the service
-            initializeGestureController();
-            Log.d(TAG, "BluetoothService connected");
+            setUp();
+            gestureController.start();
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            isServiceBound = false;
-            Log.d(TAG, "BluetoothService disconnected");
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
         }
     };
 
@@ -121,69 +125,43 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             return insets;
         });
 
-        // Start and bind to the BluetoothService
-        startAndBindBluetoothService();
-
-        setUp();
+//        super.onStart();
+        // Start and bind to the service.
+        Intent serviceIntent = new Intent(this, BluetoothService.class);
+        startService(serviceIntent); // This makes the service live beyond activity binding.
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if (!isServiceBound) {
-            startAndBindBluetoothService();
-        }
+        // Start and bind to the service.
+        Intent serviceIntent = new Intent(this, BluetoothService.class);
+        startService(serviceIntent); // This makes the service live beyond activity binding.
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
     }
+
 
     @Override
     protected void onResume() {
         super.onResume();
         // Start gesture detection when activity resumes
-        if (gestureController != null) {
-            gestureController.start();
-        }
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         // Stop gesture detection when activity is paused
-        if (gestureController != null) {
-            gestureController.stop();
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        // We're not unbinding the service here to keep bluetooth connections alive
-    }
-
-    private void startAndBindBluetoothService() {
-        Intent serviceIntent = new Intent(this, BluetoothService.class);
-        startService(serviceIntent);
-        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    private void initializeGestureController() {
-        if (isServiceBound && bluetoothService != null) {
-            BluetoothModule bluetoothModule = bluetoothService.getBluetoothModule();
-            // Pass this activity as the GestureListener so that callbacks can update the UI
-            gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
-
-            // Start detecting gestures if the activity is visible
-            if (hasWindowFocus()) {
-                gestureController.start();
-            }
-        } else {
-            Log.e(TAG, "Cannot initialize GestureController: BluetoothService not bound");
-        }
+        gestureController.stop();
     }
 
     /**
-     * Initializes UI elements and sets up components like TTS, Bluetooth, and GestureClassifier.
+     * Initializes UI elements and sets up components like TTS, Bluetooth, and GestureController.
      */
     private void setUp() {
+
         // Link UI components from layout
         titleTranslate = findViewById(R.id.title_translate);
         labelHandSign = findViewById(R.id.label_hand_sign);
@@ -211,9 +189,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         // Initialize TextToSpeech engine
         tts = new TextToSpeech(this, this);
 
-        // Initialize asset manager and gesture classifier
+        // Instantiate Bluetooth module, asset manager, gesture classifier, and gesture controller
         assetManager = getApplicationContext().getAssets();
         gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
+        // Pass this activity as the GestureListener so that callbacks can update the UI
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
 
         // Set up bottom navigation view for activity navigation
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
@@ -233,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         });
     }
 
-    //The broadcast receiver is used to listen for changes in the BT adapter state
+    //The broastcast receiver is used to listen for changes in the BT adapater state
     private final BroadcastReceiver mBroastCastReceiver1 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -313,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     muted = !muted;
                     if(muted) {buttonSpeaker.setImageResource(R.drawable.volume_off_logo);}
                     else{buttonSpeaker.setImageResource(R.drawable.speaker_logo);}
-                    return true;
+
                 }
                 return false;
             });
@@ -439,12 +419,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             BluetoothDevice device = pairedDevicesList.get(position);
             Toast.makeText(this, "Connecting to " + device.getName(), Toast.LENGTH_SHORT).show();
 
-            // Use BluetoothModule from the service
-            if (isServiceBound && bluetoothService != null) {
-                bluetoothService.getBluetoothModule().connectToDevice(this, device);
-            } else {
-                Toast.makeText(this, "Bluetooth service not available", Toast.LENGTH_SHORT).show();
-            }
+            bluetoothModule.connectToDevice(this, device);
         });
 
         newDevices.setOnItemClickListener((parent, itemView, position, id) -> {
@@ -467,12 +442,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
             mBluetoothAdapter.cancelDiscovery();
 
-            // Connect to the device using BluetoothModule from the service
-            if (isServiceBound && bluetoothService != null) {
-                bluetoothService.getBluetoothModule().connectToDevice(this, device);
-            } else {
-                Toast.makeText(this, "Bluetooth service not available", Toast.LENGTH_SHORT).show();
-            }
+            // Connect to the device
+            bluetoothModule.connectToDevice(this, device);
         });
 
         final AlertDialog dialog = builder.create();
@@ -492,6 +463,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         dialog.show();
     }
 
+
+    //processes the data from the from the readDataFromSocket.
+
+
+
     /**
      * Callback from GestureController when a new gesture is detected.
      * Updates UI and speaks new translation if it has changed.
@@ -507,6 +483,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             clearLoadingAnimation();
             // Update the image view with the gesture image
             setGestureImageView(gesture.getImagePath());
+
+
         });
     }
 
@@ -515,8 +493,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         // Update UI with loading animation and message
         setGestureImageView("lebronjames.png");
         // Clear any loading animation
-        clearLoadingAnimation();
-        textTranslatedOutput.setText(data);
+        clearLoadingAnimation();        textTranslatedOutput.setText(data);
     }
 
     /**
@@ -569,7 +546,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             imageHandSign.setImageDrawable(d);
         } catch (IOException ex) {
             // Handle error (for example, show a default image or log the error)
-            Log.e(TAG, "Error loading gesture image: " + path, ex);
         }
     }
 
@@ -608,7 +584,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
-            // Set TTS language to UK English
+            // Set TTS language to Canadian English
             int result = tts.setLanguage(Locale.UK);
             if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
                 buttonSpeaker.setEnabled(true);
@@ -622,7 +598,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private void navigateToSettingsActivity() {
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
-     }
+    }
 
     /**
      * Navigates to the Gestures Activity.
@@ -640,30 +616,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         if (tts != null) {
             tts.shutdown();
         }
-
-        if (gestureClassifier != null) {
-            gestureClassifier.close();
-        }
-
-        // Unbind from the BluetoothService
-        if (isServiceBound) {
-            unbindService(serviceConnection);
-            isServiceBound = false;
-        }
-
-        try {
-            // Unregister any remaining receivers
-            unregisterReceiver(mBroastCastReceiver1);
-        } catch (IllegalArgumentException e) {
-            // Receiver was not registered
-        }
-
-        try {
-            unregisterReceiver(mBroastCastReceiver3);
-        } catch (IllegalArgumentException e) {
-            // Receiver was not registered
-        }
-
+        gestureClassifier.close();
         super.onDestroy();
     }
 }

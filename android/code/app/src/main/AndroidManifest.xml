@@ -30,6 +30,7 @@
         <activity
             android:name=".SettingActivity"
             android:exported="false" />
+        <service android:name=".BluetoothService" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
