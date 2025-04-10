@@ -245,6 +245,7 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
 
         // Initialize MediaPlayer with the sound resource for a correct answer
         correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound_1);
+//        correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound);
 
     }
 
