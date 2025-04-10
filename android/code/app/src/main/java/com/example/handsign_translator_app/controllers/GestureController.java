@@ -85,13 +85,8 @@ public class GestureController {
             if (!running) return;  // 👈 Prevent execution if stopped
 
             boolean deviceConnected = bluetoothModule.isDeviceConnected();
-//            deviceConnected = true;
+            deviceConnected = true;
             if (deviceConnected){
-
-//                if(true){
-//                    listener.rawDataOutput(bluetoothModule.getRawData());
-//                    return;
-//                }
 
                 // Retrieve the latest sensor data from the Bluetooth module
                 int[] currentFlexReadings = bluetoothModule.getGloveData();
