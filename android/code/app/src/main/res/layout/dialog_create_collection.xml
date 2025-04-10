@@ -20,6 +20,8 @@
         android:id="@+id/editTextCollectionName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+
+        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 "
         android:hint="Collection Name"
         android:inputType="textPersonName"
         android:layout_marginBottom="8dp" />
@@ -28,6 +30,7 @@
         android:id="@+id/editTextCollectionDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 "
         android:hint="Collection Description"
         android:inputType="textMultiLine"
         android:minLines="2"

@@ -21,6 +21,7 @@ import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -102,9 +103,6 @@ public class GesturesActivity extends AppCompatActivity {
         setupMoreOptionsMenu();
     }
 
-    /**
-     * Initializes view references, assetManager, bottom navigation and the change collection button.
-     */
     private void setUp() {
         titleGestures = findViewById(R.id.title_settings);
         buttonMoreOptions = findViewById(R.id.button_more_options);
@@ -120,6 +118,7 @@ public class GesturesActivity extends AppCompatActivity {
         textViewCollectionName.setText(collectionName);
         textViewCollectionDescription.setText(collectionDescription);
 
+        // Launch our change-collection dialog.
         buttonChangeCollection.setOnClickListener(v -> showChangeCollectionDialog());
 
         bottomNavigationView.setSelectedItemId(R.id.gestures);
@@ -153,9 +152,6 @@ public class GesturesActivity extends AppCompatActivity {
         startActivity(new Intent(this, LearningActivity.class));
     }
 
-    /**
-     * Loads the gestures from the helper and saves their original meanings using keys that include the active collection name.
-     */
     private void initializeOriginalMeanings() {
         all_gestures = gestureInfoHelper.getGestures();
         originalMeanings = new HashMap<>();
@@ -169,9 +165,6 @@ public class GesturesActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Dynamically builds the GridLayout with gesture cards based on the current gesture list.
-     */
     private void populateGestureGrid() {
         GridLayout gridLayout = findViewById(R.id.gesture_grid);
         gridLayout.removeAllViews();
@@ -181,7 +174,7 @@ public class GesturesActivity extends AppCompatActivity {
         for (Gesture gesture : all_gestures) {
             CardView cardView = new CardView(this);
             GridLayout.LayoutParams cardParams = new GridLayout.LayoutParams();
-            cardParams.width = 0; // Use weight-based width for equal distribution.
+            cardParams.width = 0;
             cardParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             cardParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
             cardView.setLayoutParams(cardParams);
@@ -221,7 +214,6 @@ public class GesturesActivity extends AppCompatActivity {
             textView.setMaxLines(2);
             textView.setEllipsize(TextUtils.TruncateAt.END);
             textView.setTextSize(16);
-            // Use the active collection name as part of the key.
             String customKey = collectionName + KEY_CUSTOM_PREFIX + gesture.getLabel();
             String originalGestureMeaning = gesture.getTranslation();
             String labelText = gesturePrefs.getString(customKey, originalGestureMeaning);
@@ -240,10 +232,6 @@ public class GesturesActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Opens a dialog to edit a gesture's custom label.
-     * @param gesture The Gesture object to be edited.
-     */
     private void showEditDialog(Gesture gesture) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_gesture, null);
@@ -279,10 +267,6 @@ public class GesturesActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Resets a specific gesture's custom label back to its original meaning for the active collection.
-     * @param gestureLabel The label of the gesture.
-     */
     private void resetGesture(String gestureLabel) {
         String originalMeaning = gesturePrefs.getString(collectionName + KEY_ORIGINAL_PREFIX + gestureLabel, gestureLabel);
         gesturePrefs.edit().remove(collectionName + KEY_CUSTOM_PREFIX + gestureLabel).apply();
@@ -290,9 +274,6 @@ public class GesturesActivity extends AppCompatActivity {
         Toast.makeText(this, "Gesture reset to default", Toast.LENGTH_SHORT).show();
     }
 
-    /**
-     * Sets up the More Options menu (e.g., for resetting all gestures).
-     */
     private void setupMoreOptionsMenu() {
         buttonMoreOptions.setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -301,15 +282,12 @@ public class GesturesActivity extends AppCompatActivity {
                         if (which == 0) {
                             resetAllGestures();
                         }
-                        // "Reset Current Gesture" is handled within the edit dialog.
+                        // "Reset Current Gesture" is handled in the edit dialog.
                     })
                     .show();
         });
     }
 
-    /**
-     * Resets all gestures in the active collection back to their original meanings.
-     */
     private void resetAllGestures() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Reset All Gestures")
@@ -328,10 +306,13 @@ public class GesturesActivity extends AppCompatActivity {
     }
 
     /**
-     * Opens a dialog that lists the existing collections and allows the user to select one or create a new one.
+     * Opens a dialog that lists existing collections.
+     * A single-tap will let the user select a collection.
+     * A long-tap (on an item) will prompt deletion of that collection (except for "Default Collection").
+     * Also includes an option to create a new collection.
      */
     private void showChangeCollectionDialog() {
-        // Retrieve the collections set from SharedPreferences.
+        // Retrieve existing collection set.
         Set<String> collectionSet = gesturePrefs.getStringSet(KEY_COLLECTION_SET, null);
         if (collectionSet == null || collectionSet.isEmpty()) {
             collectionSet = new HashSet<>();
@@ -349,6 +330,7 @@ public class GesturesActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select Gesture Collection")
                 .setSingleChoiceItems(collections, selectedIndex, null)
+                // "Select" button.
                 .setPositiveButton("Select", (dialog, which) -> {
                     AlertDialog alertDialog = (AlertDialog) dialog;
                     int selectedPosition = alertDialog.getListView().getCheckedItemPosition();
@@ -356,35 +338,115 @@ public class GesturesActivity extends AppCompatActivity {
                     collectionName = chosenCollection;
                     gesturePrefs.edit().putString("collectionName", collectionName).apply();
                     textViewCollectionName.setText(collectionName);
-                    // Reinitialize original mappings and update the grid.
+                    // Reinitialize original mappings and update grid.
                     initializeOriginalMeanings();
                     populateGestureGrid();
                     Toast.makeText(this, "Collection changed to " + collectionName, Toast.LENGTH_SHORT).show();
                 })
+                // "Create New" button.
                 .setNeutralButton("Create New", (dialog, which) -> {
                     showCreateNewCollectionDialog();
                 })
-                .setNegativeButton("Cancel", null)
-                .show();
+                .setNegativeButton("Cancel", null);
+
+        AlertDialog changeDialog = builder.create();
+        changeDialog.show();
+
+        // Add long press listener to the ListView to enable deletion.
+        ListView listView = changeDialog.getListView();
+        Set<String> finalCollectionSet = collectionSet;
+        listView.setOnItemLongClickListener((parent, view, position, id) -> {
+            String selectedCollection = collections[position];
+            // Prevent deletion of "Default Collection".
+            if (selectedCollection.equals("Default Collection")) {
+                Toast.makeText(this, "Default Collection cannot be deleted", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            // Confirm deletion.
+            new AlertDialog.Builder(this)
+                    .setTitle("Delete Collection")
+                    .setMessage("Are you sure you want to delete the collection: " + selectedCollection + "?")
+                    .setPositiveButton("Delete", (d, w) -> {
+                        // Remove from the set.
+                        Set<String> newSet = new HashSet<>(finalCollectionSet);
+                        newSet.remove(selectedCollection);
+                        gesturePrefs.edit().putStringSet(KEY_COLLECTION_SET, newSet).apply();
+                        // If the deleted collection is active, revert to Default Collection.
+                        if (selectedCollection.equals(collectionName)) {
+                            collectionName = "Default Collection";
+                            gesturePrefs.edit().putString("collectionName", collectionName).apply();
+                            textViewCollectionName.setText(collectionName);
+                            // Reinitialize keys.
+                            initializeOriginalMeanings();
+                            populateGestureGrid();
+                        }
+                        Toast.makeText(this, "Collection " + selectedCollection + " deleted", Toast.LENGTH_SHORT).show();
+                        // Dismiss the change dialog and reopen it to refresh the list.
+                        changeDialog.dismiss();
+                        showChangeCollectionDialog();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+            return true;
+        });
     }
 
-    /**
-     * Opens a dialog for the user to create a new collection with a name and description.
-     */
     private void showCreateNewCollectionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Create New Collection");
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_collection, null);
-        // Ensure you have created dialog_create_collection.xml with EditTexts having these ids.
         EditText editTextName = dialogView.findViewById(R.id.editTextCollectionName);
         EditText editTextDescription = dialogView.findViewById(R.id.editTextCollectionDescription);
         builder.setView(dialogView);
-        builder.setPositiveButton("Create", (dialog, which) -> {
-            String newCollectionName = editTextName.getText().toString().trim();
-            String newCollectionDescription = editTextDescription.getText().toString().trim();
-            if (!newCollectionName.isEmpty()) {
-                // Add the new collection to the stored set.
+        // Set positive button initially with null listener so we can override it.
+        builder.setPositiveButton("Create", null);
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(d -> {
+            Button createButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            createButton.setOnClickListener(v -> {
+                // Retrieve and trim input.
+                String newCollectionName = editTextName.getText().toString().trim();
+                String newCollectionDescription = editTextDescription.getText().toString().trim();
+
+                // Process the collection name:
+                // 1. Remove disallowed characters (allow only letters, numbers, and spaces).
+                newCollectionName = newCollectionName.replaceAll("[^a-zA-Z0-9 ]", "");
+                // 2. Replace any multiple spaces with a single space.
+                newCollectionName = newCollectionName.replaceAll("\\s+", " ").trim();
+
+                // Process the description (if needed, you can filter out unwanted characters).
+                newCollectionDescription = newCollectionDescription.replaceAll("[^a-zA-Z0-9 ,\\.]", "");
+                newCollectionDescription = newCollectionDescription.replaceAll("\\s+", " ").trim();
+
+                // Check maximum length restrictions.
+                if (newCollectionName.length() > 20) {
+                    Toast.makeText(this, "Collection name max length is 20 characters", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (newCollectionDescription.length() > 100) {
+                    Toast.makeText(this, "Collection description max length is 100 characters", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Convert collection name to title case.
+                newCollectionName = toTitleCase(newCollectionName);
+
+                // Ensure the collection name is not empty.
+                if (newCollectionName.isEmpty()) {
+                    Toast.makeText(this, "Collection name cannot be empty", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Check for duplicates.
                 Set<String> collectionSet = gesturePrefs.getStringSet(KEY_COLLECTION_SET, new HashSet<>());
+                if (collectionSet != null && collectionSet.contains(newCollectionName)) {
+                    Toast.makeText(this, "Collection already exists", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Add the new collection to the stored set.
                 Set<String> newCollectionSet = new HashSet<>(collectionSet);
                 newCollectionSet.add(newCollectionName);
                 gesturePrefs.edit().putStringSet(KEY_COLLECTION_SET, newCollectionSet).apply();
@@ -396,15 +458,34 @@ public class GesturesActivity extends AppCompatActivity {
                 gesturePrefs.edit().putString("collectionDescription", collectionDescription).apply();
                 textViewCollectionName.setText(collectionName);
                 textViewCollectionDescription.setText(collectionDescription);
+
                 // Reinitialize original mappings and update the grid.
                 initializeOriginalMeanings();
                 populateGestureGrid();
                 Toast.makeText(this, "New collection " + collectionName + " created", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Collection name cannot be empty", Toast.LENGTH_SHORT).show();
-            }
+                dialog.dismiss();
+            });
         });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        dialog.show();
     }
+
+    /**
+     * Converts a string to title case: first letter of each word uppercase, rest lowercase.
+     * For example, "hello world" becomes "Hello World".
+     */
+    private String toTitleCase(String input) {
+        String[] words = input.split(" ");
+        StringBuilder titleCase = new StringBuilder();
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                titleCase.append(Character.toUpperCase(word.charAt(0)));
+                if (word.length() > 1) {
+                    titleCase.append(word.substring(1).toLowerCase());
+                }
+                titleCase.append(" ");
+            }
+        }
+        return titleCase.toString().trim();
+    }
+
 }
