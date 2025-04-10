@@ -59,9 +59,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 import com.example.handsign_translator_app.controllers.GestureController;
+import com.example.handsign_translator_app.database.GestureLogDbHelper;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
 import com.example.handsign_translator_app.models.Gesture;
+import com.example.handsign_translator_app.models.GestureLog;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener, GestureController.GestureListener {
@@ -89,6 +91,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private BluetoothModule bluetoothModule;
     private boolean muted;
     BluetoothAdapter mBluetoothAdapter;
+    private GestureLogDbHelper dbHelper;
+
 
     private List<BluetoothDevice> mBTDevices = new ArrayList<>(); //List to store discover devices
     private ArrayAdapter<String> mDeviceListAdapter; //Used to list device info in the listview
@@ -288,6 +292,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
         // Pass this activity as the GestureListener and context so that callbacks can update the UI
         gestureController = new GestureController(bluetoothModule, gestureClassifier, this, getApplicationContext());
+
+        dbHelper = new GestureLogDbHelper(getApplicationContext());
 
         // Set up bottom navigation view for activity navigation
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
@@ -671,6 +677,14 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         if (!output.equals(lastSpokenTranslation)) {
             speak(output);
             lastSpokenTranslation = output;
+
+            // Log the detected gesture
+            GestureLog log = new GestureLog(
+                    gesture.getLabel(),
+                    gesture.getCustomTranslation().isEmpty() ? gesture.getTranslation() : gesture.getCustomTranslation(),
+                    System.currentTimeMillis()
+            );
+            dbHelper.addGestureLog(log);
         }
     }
 

@@ -202,7 +202,7 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
 
         gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
         // Pass this activity as the GestureListener so that callbacks can update the UI
-        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, this, getApplicationContext());
 
 
         // Bottom Navigation

@@ -126,7 +126,7 @@ public class GestureController {
                             gesture.getCustomTranslation().isEmpty() ? gesture.getTranslation() : gesture.getCustomTranslation(),
                             System.currentTimeMillis()
                     );
-                    dbHelper.addGestureLog(log);
+//                    dbHelper.addGestureLog(log);
 
                 } else {
                     currentGesture = null;
