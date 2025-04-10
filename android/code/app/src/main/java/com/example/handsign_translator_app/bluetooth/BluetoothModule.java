@@ -55,6 +55,8 @@ public class BluetoothModule {
                 activity.runOnUiThread(() -> Toast.makeText(context, "Connected to " + device.getName(), Toast.LENGTH_SHORT).show());
                 // Start continuously reading data from the socket
                 startDataReading();
+                startConnectionMonitor();
+
             } catch (Exception e) {
                 final String message = e.getMessage();
                 activity.runOnUiThread(() -> Toast.makeText(context, "Connection failed: " + message, Toast.LENGTH_SHORT).show());
@@ -102,6 +104,28 @@ public class BluetoothModule {
             }
         });
         dataThread.start();
+    }
+
+    private void startConnectionMonitor() {
+        new Thread(() -> {
+            while (keepReading && bluetoothSocket != null) {
+                try {
+                    Thread.sleep(2000); // Check every 2 seconds
+                    bluetoothSocket.getInputStream().available(); // Triggers IOException if disconnected
+                } catch (Exception e) {
+                    Log.d(TAG, "Bluetooth device disconnected", e);
+                    if (context instanceof Activity) {
+                        Activity activity = (Activity) context;
+                        activity.runOnUiThread(() ->
+                                Toast.makeText(context, "Bluetooth device has been disconnected. Please reconnect it", Toast.LENGTH_SHORT).show()
+                        );
+                    }
+                    stopDataReading();
+                    bluetoothSocket = null;
+                    break;
+                }
+            }
+        }).start();
     }
 
     /**
@@ -162,7 +186,7 @@ public class BluetoothModule {
         int finger5 = randomNumber(0,180);
 //        return new int[]{finger1, finger2, finger3, finger4, finger5};
 
-        return new int[]{180, 0, 0, 180, 180};
+        return new int[]{180,113,180,180,139};
     }
 
     /**

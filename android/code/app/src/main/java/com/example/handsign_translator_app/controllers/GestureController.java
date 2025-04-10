@@ -30,6 +30,8 @@ public class GestureController {
     private GestureListener listener;
     // Stores the currently detected gesture (if any)
     public Gesture currentGesture;
+    private boolean running = false;
+
     private Context context;
     private GestureLogDbHelper dbHelper;
 
@@ -64,15 +66,21 @@ public class GestureController {
      * Starts the periodic reading of sensor data.
      */
     public void start() {
-        handler.post(runnable);
+        if (!running) {
+            running = true;
+            handler.post(runnable);
+        }
     }
-
     /**
      * Stops the periodic reading of sensor data.
      */
     public void stop() {
+        running = false;
         handler.removeCallbacks(runnable);
+        listener = null;
     }
+
+
 
     /**
      * Runnable that reads sensor data, checks for gesture stability, and triggers classification.
@@ -80,43 +88,61 @@ public class GestureController {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            if(bluetoothModule.isDeviceConnected()){
-                String data = bluetoothModule.getRawData();
-                if(data.isEmpty()){
-                    listener.onTranslationInProgress();
-                }
-                else{
-                    int[] currentFlexReadings = parseFlexReadings(data);
+            if (!running) return;  // 👈 Prevent execution if stopped
+
+            boolean deviceConnected = bluetoothModule.isDeviceConnected();
+            deviceConnected = true;
+            if (deviceConnected){
+
+                // Retrieve the latest sensor data from the Bluetooth module
+                int[] currentFlexReadings = bluetoothModule.getGloveData();
+                boolean isStable = false;
+                if (currentFlexReadings.length != 0) {
+
+                    // Optionally, you could invoke a callback here:
+                    // listener.onSensorDataReceived(currentFlexReadings);
+
+                    // Add the new readings to the sliding window
                     flexReadingsHistory.addLast(currentFlexReadings);
+                    // Maintain a fixed-size sliding window
                     if (flexReadingsHistory.size() > STABILITY_WINDOW) {
                         flexReadingsHistory.removeFirst();
                     }
+                    // Check if the current gesture (based on recent sensor readings) is stable
+                    isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
+                }
+                if (isStable) {
+                    // Convert sensor readings from int[] to float[]
+                    float[] sensorData = convertIntArrayToFloatArray(currentFlexReadings);
+                    // Classify the gesture using the gesture classifier
+                    Gesture gesture = gestureClassifier.classifyGesture(sensorData);
+                    currentGesture = gesture;
+                    // Notify listener that a gesture has been detected
+                    listener.onGestureDetected(gesture);
 
-                    boolean isStable = GestureStabilityChecker.isGestureStable(flexReadingsHistory);
-
-                    if (isStable) {
-                        float[] sensorData = convertIntArrayToFloatArray(currentFlexReadings);
-                        Gesture gesture = gestureClassifier.classifyGesture(sensorData);
-                        currentGesture = gesture;
-                        listener.onGestureDetected(gesture);
-                        
-                        // Log the detected gesture
-                        GestureLog log = new GestureLog(
+                    // Log the detected gesture
+                    GestureLog log = new GestureLog(
                             gesture.getLabel(),
                             gesture.getCustomTranslation().isEmpty() ? gesture.getTranslation() : gesture.getCustomTranslation(),
                             System.currentTimeMillis()
-                        );
-                        dbHelper.addGestureLog(log);
-                    } else {
-                        currentGesture = null;
-                        listener.onTranslationInProgress();
-                    }
+                    );
+                    dbHelper.addGestureLog(log);
+
+                } else {
+                    currentGesture = null;
+                    // Notify listener that translation is in progress (gesture unstable)
+                    listener.onTranslationInProgress();
                 }
-            } else {
+            }
+            else{
                 listener.onNoDeviceConnected();
             }
 
-            handler.postDelayed(this, SENSOR_READ_DELAY_MS);
+            // Schedule the next sensor reading after the specified delay
+            // Only schedule the next run if still running
+            if (running) {
+                handler.postDelayed(this, SENSOR_READ_DELAY_MS);
+            }
         }
     };
 
@@ -131,12 +157,7 @@ public class GestureController {
         return floatArray;
     }
 
-    private int[] parseFlexReadings(String data) {
-        String[] parts = data.split(",");
-        int[] readings = new int[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            readings[i] = Integer.parseInt(parts[i].trim());
-        }
-        return readings;
+    public void resetFlexReadingHistory(){
+        flexReadingsHistory = new ArrayDeque<>();
     }
 }
