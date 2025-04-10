@@ -1,10 +1,13 @@
 package com.example.handsign_translator_app.controllers;
 
+import android.content.Context;
 import android.os.Handler;
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
+import com.example.handsign_translator_app.database.GestureLogDbHelper;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
 import com.example.handsign_translator_app.models.Gesture;
+import com.example.handsign_translator_app.models.GestureLog;
 import com.example.handsign_translator_app.utils.Constants;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -27,6 +30,10 @@ public class GestureController {
     private GestureListener listener;
     // Stores the currently detected gesture (if any)
     public Gesture currentGesture;
+    private boolean running = false;
+
+    private Context context;
+    private GestureLogDbHelper dbHelper;
 
     /**
      * Interface definition for callbacks to be invoked when a gesture is detected
@@ -47,25 +54,33 @@ public class GestureController {
     /**
      * Constructor for GestureController.
      */
-    public GestureController(BluetoothModule bluetoothModule, GestureClassifier gestureClassifier, GestureListener listener) {
+    public GestureController(BluetoothModule bluetoothModule, GestureClassifier gestureClassifier, GestureListener listener, Context context) {
         this.bluetoothModule = bluetoothModule;
         this.gestureClassifier = gestureClassifier;
         this.listener = listener;
+        this.context = context;
+        this.dbHelper = new GestureLogDbHelper(context);
     }
 
     /**
      * Starts the periodic reading of sensor data.
      */
     public void start() {
-        handler.post(runnable);
+        if (!running) {
+            running = true;
+            handler.post(runnable);
+        }
     }
-
     /**
      * Stops the periodic reading of sensor data.
      */
     public void stop() {
+        running = false;
         handler.removeCallbacks(runnable);
+        listener = null;
     }
+
+
 
     /**
      * Runnable that reads sensor data, checks for gesture stability, and triggers classification.
@@ -73,14 +88,11 @@ public class GestureController {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
+            if (!running) return;  // 👈 Prevent execution if stopped
+
             boolean deviceConnected = bluetoothModule.isDeviceConnected();
 //            deviceConnected = true;
             if (deviceConnected){
-
-//                if(true){
-//                    listener.rawDataOutput(bluetoothModule.getRawData());
-//                    return;
-//                }
 
                 // Retrieve the latest sensor data from the Bluetooth module
                 int[] currentFlexReadings = bluetoothModule.getGloveData();
@@ -107,6 +119,15 @@ public class GestureController {
                     currentGesture = gesture;
                     // Notify listener that a gesture has been detected
                     listener.onGestureDetected(gesture);
+
+                    // Log the detected gesture
+                    GestureLog log = new GestureLog(
+                            gesture.getLabel(),
+                            gesture.getCustomTranslation().isEmpty() ? gesture.getTranslation() : gesture.getCustomTranslation(),
+                            System.currentTimeMillis()
+                    );
+//                    dbHelper.addGestureLog(log);
+
                 } else {
                     currentGesture = null;
                     // Notify listener that translation is in progress (gesture unstable)
@@ -118,7 +139,10 @@ public class GestureController {
             }
 
             // Schedule the next sensor reading after the specified delay
-            handler.postDelayed(this, SENSOR_READ_DELAY_MS);
+            // Only schedule the next run if still running
+            if (running) {
+                handler.postDelayed(this, SENSOR_READ_DELAY_MS);
+            }
         }
     };
 
@@ -131,5 +155,9 @@ public class GestureController {
             floatArray[i] = intArray[i];
         }
         return floatArray;
+    }
+
+    public void resetFlexReadingHistory(){
+        flexReadingsHistory = new ArrayDeque<>();
     }
 }

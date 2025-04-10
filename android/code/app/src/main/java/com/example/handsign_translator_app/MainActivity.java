@@ -15,11 +15,14 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.ServiceConnection;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import java.io.IOException;
@@ -56,9 +59,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 import com.example.handsign_translator_app.controllers.GestureController;
+import com.example.handsign_translator_app.database.GestureLogDbHelper;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
 import com.example.handsign_translator_app.models.Gesture;
+import com.example.handsign_translator_app.models.GestureLog;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener, GestureController.GestureListener {
@@ -75,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private BottomNavigationView bottomNavigationView;
     private AssetManager assetManager;
 
+
     // Text-to-Speech engine and state flag for loading animation
     private TextToSpeech tts;
     private boolean loading = false;
@@ -83,8 +89,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private GestureController gestureController;
     private GestureClassifier gestureClassifier;
     private BluetoothModule bluetoothModule;
-    private boolean muted = false;
+    private boolean muted;
     BluetoothAdapter mBluetoothAdapter;
+    private GestureLogDbHelper dbHelper;
+
 
     private List<BluetoothDevice> mBTDevices = new ArrayList<>(); //List to store discover devices
     private ArrayAdapter<String> mDeviceListAdapter; //Used to list device info in the listview
@@ -115,10 +123,23 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        applySavedLanguage();
+
+        // Apply saved theme
+        SharedPreferences sharedPreferences = getSharedPreferences("theme_pref", Context.MODE_PRIVATE);
+        boolean nightMode = sharedPreferences.getBoolean("dark_mode", false);
+
+        if (nightMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); //ensures that no dark mode i think? check after:
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -127,10 +148,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
 //        super.onStart();
         // Start and bind to the service.
-        Intent serviceIntent = new Intent(this, BluetoothService.class);
-        startService(serviceIntent); // This makes the service live beyond activity binding.
-        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+//        Intent serviceIntent = new Intent(this, BluetoothService.class);
+//        startService(serviceIntent); // This makes the service live beyond activity binding.
+//        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+//        setUp();
+
     }
+
+
 
     @Override
     protected void onStart() {
@@ -146,22 +172,73 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onResume() {
         super.onResume();
-        // Start gesture detection when activity resumes
-
+//        if (gestureController != null) {
+//            gestureController.start();
+//        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         // Stop gesture detection when activity is paused
-//        gestureController.stop();
+
+        muted = true;
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        if (gestureClassifier != null) {
+            gestureClassifier.close();
+        }
+
+        if (gestureController != null) {
+            gestureController.stop();
+//            gestureController.setGestureListener(null);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(serviceConnection);
+        isBound = false;
+    }
+
+
+    /**
+     * Ensures proper shutdown of TTS and closing of resources.
+     */
+    @Override
+    protected void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        if (gestureClassifier != null) {
+            gestureClassifier.close();
+        }
+
+        if (gestureController != null) {
+            gestureController.stop();
+//            gestureController.setGestureListener(null);
+        }
+        super.onDestroy();
     }
 
     /**
      * Initializes UI elements and sets up components like TTS, Bluetooth, and GestureController.
      */
-    private void setUp() {
+    private void applySavedLanguage() {
+        SharedPreferences prefs = getSharedPreferences("language_pref", MODE_PRIVATE);
+        String langCode = prefs.getString("selected_language", "en");
 
+        Locale locale = new Locale(langCode);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.setLocale(locale);
+        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
+    }
+    private void setUp() {
         // Link UI components from layout
         titleTranslate = findViewById(R.id.title_translate);
         labelHandSign = findViewById(R.id.label_hand_sign);
@@ -171,6 +248,13 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         buttonHistory = findViewById(R.id.button_history);
         buttonMoreOptions = findViewById(R.id.button_more_options);
 
+        // Add history button click listener
+        buttonHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, LogsActivity.class);
+            startActivity(intent);
+        });
+
+        muted = false;
         popUpBT();
 
         buttonSpeaker = findViewById(R.id.button_speaker);
@@ -186,14 +270,28 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             speak(text);
         });
 
+        TextView labelLanguage = findViewById(R.id.label_language);
+
+// Get current locale
+        Locale current = getResources().getConfiguration().locale;
+
+// Set text based on locale
+        if (current.getLanguage().equals("fr")) {
+            labelLanguage.setText(getString(R.string.french));
+        } else {
+            labelLanguage.setText(getString(R.string.English));
+        }
+
         // Initialize TextToSpeech engine
         tts = new TextToSpeech(this, this);
 
         // Instantiate Bluetooth module, asset manager, gesture classifier, and gesture controller
         assetManager = getApplicationContext().getAssets();
         gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
-        // Pass this activity as the GestureListener so that callbacks can update the UI
-        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
+        // Pass this activity as the GestureListener and context so that callbacks can update the UI
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, this, getApplicationContext());
+
+        dbHelper = new GestureLogDbHelper(getApplicationContext());
 
         // Set up bottom navigation view for activity navigation
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
@@ -207,6 +305,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 // Navigate to Gestures Activity if selected
             } else if (item.getItemId() == R.id.gestures) {
                 navigateToGesturesActivity();
+                return true;
+            } else if (item.getItemId() == R.id.learning) {
+                navigateToLearningActivity();
                 return true;
             }
             return false;
@@ -293,7 +394,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     muted = !muted;
                     if(muted) {buttonSpeaker.setImageResource(R.drawable.volume_off_logo);}
                     else{buttonSpeaker.setImageResource(R.drawable.speaker_logo);}
-
+                }
+                else if (item.getItemId() == R.id.textToAsl) {
+                    navigateToTextToASLActivity();
+                    return true;
                 }
                 return false;
             });
@@ -301,6 +405,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         });
     }
 
+    private void navigateToTextToASLActivity() {
+        Intent intent = new Intent(this, TextToASLActivity.class);
+        startActivity(intent);
+    }
 
     // Method to enable or disable Bluetooth
     @SuppressLint("RestrictedApi")
@@ -482,9 +590,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             // Clear any loading animation
             clearLoadingAnimation();
             // Update the image view with the gesture image
-            setGestureImageView(gesture.getImagePath());
-
-
+            setGestureImageView(gesture);
         });
     }
 
@@ -510,7 +616,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     public void onNoDeviceConnected() {
         setLoadingAnimation();
-        textTranslatedOutput.setText("No device connected...");
+        textTranslatedOutput.setText(getString(R.string.no_device_connected));
     }
 
     /**
@@ -549,6 +655,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    private void setGestureImageView(Gesture gesture) {
+        try {
+            imageHandSign.setImageDrawable(gesture.getImage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private void setTranslationOutput(Gesture gesture){
         String customTranslation = gesture.getCustomTranslation();
         String translation = gesture.getTranslation();
@@ -567,6 +682,14 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         if (!output.equals(lastSpokenTranslation)) {
             speak(output);
             lastSpokenTranslation = output;
+
+            // Log the detected gesture
+            GestureLog log = new GestureLog(
+                    gesture.getLabel(),
+                    gesture.getCustomTranslation().isEmpty() ? gesture.getTranslation() : gesture.getCustomTranslation(),
+                    System.currentTimeMillis()
+            );
+            dbHelper.addGestureLog(log);
         }
     }
 
@@ -598,6 +721,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private void navigateToSettingsActivity() {
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
+        finish();
+
     }
 
     /**
@@ -606,17 +731,18 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private void navigateToGesturesActivity() {
         Intent intent = new Intent(this, GesturesActivity.class);
         startActivity(intent);
+        finish();
+
     }
 
     /**
-     * Ensures proper shutdown of TTS and closing of resources.
+     * Navigates to the Learning Activity.
      */
-    @Override
-    protected void onDestroy() {
-        if (tts != null) {
-            tts.shutdown();
-        }
-//        gestureClassifier.close();
-        super.onDestroy();
+    private void navigateToLearningActivity() {
+        Intent intent = new Intent(this, LearningActivity.class);
+        startActivity(intent);
+        finish();
     }
+
+
 }

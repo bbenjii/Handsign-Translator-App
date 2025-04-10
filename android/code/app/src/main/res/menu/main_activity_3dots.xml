@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:title= "Text to ASL"
+        android:id="@+id/textToAsl"/>
+    <item
         android:title= "Bluetooth connection"
         android:id="@+id/bluetoothPopUp"/>
     <item
-        android:title= "Mute/Unmute"
+        android:title="@string/Mute"
         android:id="@+id/mute"/>
 </menu>

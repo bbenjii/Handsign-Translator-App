@@ -26,7 +26,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Translate"
+            android:text="@string/Translate"
+            android:textColor="#607d8b"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -55,6 +56,7 @@
         android:layout_height="300dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
+        app:cardBackgroundColor="@color/white"
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -71,7 +73,8 @@
                 android:id="@+id/label_hand_sign"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Hand Signs"
+                android:text="@string/Signs"
+                android:textColor="#607d8b"
                 android:textStyle="bold" />
 
             <ImageView
@@ -91,6 +94,7 @@
         android:layout_height="300dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
+        app:cardBackgroundColor="@color/white"
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -114,7 +118,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="English"
+                    android:text="@string/English"
+                    android:textColor="#607d8b"
                     android:textStyle="bold" />
 
                 <ImageButton
@@ -130,8 +135,9 @@
                 android:id="@+id/text_translated_output"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Three"
+                android:text="No device connected..."
                 android:textAlignment="viewStart"
+                android:textColor="#607d8b"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
@@ -148,8 +154,9 @@
             android:id="@+id/bottomNavigationView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+
             android:background="#00263238"
+            app:itemTextColor="#607d8b"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/bottom_nav_menu" />
     </FrameLayout>

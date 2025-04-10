@@ -61,18 +61,24 @@ public class GestureClassifier {
     /**
      * Classifies the gesture based on provided sensor data.
      */
+    private static final float[] FEATURE_MIN = {0f, 0f, 0f, 0f, 0f};
+    private static final float[] FEATURE_MAX = {180f, 180f, 180f, 180f, 180f};
+
     public Gesture classifyGesture(float[] sensorData) {
-        // Validate that the input sensor data has the expected number of features
         if (sensorData.length != INPUT_FEATURES) {
             throw new IllegalArgumentException("Expected " + INPUT_FEATURES + " sensor readings, but got " + sensorData.length);
         }
-        // Prepare a 2D output array to store the output probabilities for each class
+
+        // Normalize input
+        float[] normalized = new float[INPUT_FEATURES];
+        for (int i = 0; i < INPUT_FEATURES; i++) {
+            normalized[i] = (sensorData[i] - FEATURE_MIN[i]) / (FEATURE_MAX[i] - FEATURE_MIN[i]);
+        }
+
         float[][] output = new float[1][OUTPUT_CLASSES];
-        // Run inference on the sensor data using the TensorFlow Lite model
-        tflite.run(sensorData, output);
-        // Get the index of the class with the highest probability
+        tflite.run(normalized, output);
+
         int predictedIndex = getMaxIndex(output[0]);
-        // Convert the index to a Gesture using the helper and return it
         return getGestureFromIndex(predictedIndex);
     }
 
