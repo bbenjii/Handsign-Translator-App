@@ -24,7 +24,7 @@ public class GestureInfoHelper {
     private List<Gesture> gestures;
     private SharedPreferences gesturePrefs;
     private static final String PREFS_NAME = "gesture_mappings";
-private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
+private static final String KEY_CUSTOM_PREFIX = "_custom_gesture_";
 
 
     /**
@@ -67,7 +67,9 @@ private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
                 String imagePath = map.get("path").trim();
                 String label = map.get("label").trim();
 
-                String customKey = KEY_CUSTOM_PREFIX + label;
+                String collectionName = gesturePrefs.getString("collectionName", "Default Collection");
+
+                String customKey = collectionName + KEY_CUSTOM_PREFIX + label;
                 String customTranslation = gesturePrefs.getString(customKey, "");
 
                 InputStream ims = assetManager.open(imagePath);

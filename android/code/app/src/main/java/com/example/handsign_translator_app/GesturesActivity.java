@@ -35,13 +35,13 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import org.w3c.dom.Text;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class GesturesActivity extends AppCompatActivity {
 
@@ -54,15 +54,20 @@ public class GesturesActivity extends AppCompatActivity {
     private AssetManager assetManager;
     private Map<String, String> originalMeanings;
     private static final String PREFS_NAME = "gesture_mappings";
-    private String collectionName = "defaultfafasd";
-    private String collectionDescription = "Default gesture collectionasfasfsadf.";
+
+    // Active collection info.
+    private String collectionName = "Default Collection";
+    private String collectionDescription = "Default gesture collection.";
 
     private TextView textViewCollectionName;
-    private Button buttonChangeCollection;
     private TextView textViewCollectionDescription;
+    private Button buttonChangeCollection;
 
+    // Key prefixes – keys now include the active collection name.
     private static final String KEY_CUSTOM_PREFIX = "_custom_gesture_";
     private static final String KEY_ORIGINAL_PREFIX = "original_gesture_";
+    // Key for storing the set of collections.
+    private static final String KEY_COLLECTION_SET = "gestureCollections";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,8 +80,19 @@ public class GesturesActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Initialize SharedPreferences
+        // Initialize SharedPreferences.
         gesturePrefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        // Ensure active collection is stored.
+        if (!gesturePrefs.contains("collectionName")) {
+            gesturePrefs.edit().putString("collectionName", collectionName).apply();
+        } else {
+            collectionName = gesturePrefs.getString("collectionName", collectionName);
+        }
+        if (!gesturePrefs.contains("collectionDescription")) {
+            gesturePrefs.edit().putString("collectionDescription", collectionDescription).apply();
+        } else {
+            collectionDescription = gesturePrefs.getString("collectionDescription", collectionDescription);
+        }
 
         setUp();
         // Populate the gestures list and store original meanings.
@@ -87,7 +103,7 @@ public class GesturesActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize view references, assetManager, and gestureInfoHelper; also set up bottom navigation.
+     * Initializes view references, assetManager, bottom navigation and the change collection button.
      */
     private void setUp() {
         titleGestures = findViewById(R.id.title_settings);
@@ -96,26 +112,15 @@ public class GesturesActivity extends AppCompatActivity {
         assetManager = getApplicationContext().getAssets();
         gestureInfoHelper = new GestureInfoHelper(assetManager, getApplicationContext());
 
-        if (gesturePrefs.contains("collectionName")) {
-            gesturePrefs.edit().putString("collectionName", "Default Collection").apply();
-        }
-
-        if (!gesturePrefs.contains("collectionDescription")) {
-            gesturePrefs.edit().putString("collectionDescription", "Default gesture collection.").apply();
-        }
-
-        collectionName = gesturePrefs.getString("collectionName", "default");
-        collectionDescription = gesturePrefs.getString("collectionDescription", "Default gesture collection.");
-
-        textViewCollectionDescription = findViewById(R.id.textViewCollectionDescription);
+        // Collection views and change collection button.
         textViewCollectionName = findViewById(R.id.textViewCollectionName);
+        textViewCollectionDescription = findViewById(R.id.textViewCollectionDescription);
+        buttonChangeCollection = findViewById(R.id.buttonChangeCollection);
 
         textViewCollectionName.setText(collectionName);
         textViewCollectionDescription.setText(collectionDescription);
 
-        buttonChangeCollection = findViewById(R.id.buttonChangeCollection);
-
-
+        buttonChangeCollection.setOnClickListener(v -> showChangeCollectionDialog());
 
         bottomNavigationView.setSelectedItemId(R.id.gestures);
         bottomNavigationView.setItemActiveIndicatorColor(
@@ -133,34 +138,23 @@ public class GesturesActivity extends AppCompatActivity {
                 return true;
             }
             return false;
-
         });
     }
 
     private void navigateToMainActivity() {
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
+        startActivity(new Intent(this, MainActivity.class));
     }
 
     private void navigateToSettingsActivity() {
-        Intent intent = new Intent(this, SettingActivity.class);
-        startActivity(intent);
+        startActivity(new Intent(this, SettingActivity.class));
     }
 
-    /**
-     * Navigates to the Learning Activity.
-     */
-    /**
-     * Navigates to the Learning Activity.
-     */
     private void navigateToLearningActivity() {
-        Intent intent = new Intent(this, LearningActivity.class);
-        startActivity(intent);
+        startActivity(new Intent(this, LearningActivity.class));
     }
 
-
     /**
-     * Load the gestures from the helper and store their original meanings into SharedPreferences.
+     * Loads the gestures from the helper and saves their original meanings using keys that include the active collection name.
      */
     private void initializeOriginalMeanings() {
         all_gestures = gestureInfoHelper.getGestures();
@@ -169,7 +163,6 @@ public class GesturesActivity extends AppCompatActivity {
             String meaning = gesture.getTranslation();
             originalMeanings.put(gesture.getLabel(), meaning);
             String key = collectionName + KEY_ORIGINAL_PREFIX + gesture.getLabel();
-            // If the original is not stored or differs, store it.
             if (!gesturePrefs.contains(key) || !gesturePrefs.getString(key, "").equals(meaning)) {
                 gesturePrefs.edit().putString(key, meaning).apply();
             }
@@ -177,7 +170,7 @@ public class GesturesActivity extends AppCompatActivity {
     }
 
     /**
-     * Dynamically builds the GridLayout with gesture cards based on the list of gestures.
+     * Dynamically builds the GridLayout with gesture cards based on the current gesture list.
      */
     private void populateGestureGrid() {
         GridLayout gridLayout = findViewById(R.id.gesture_grid);
@@ -186,10 +179,9 @@ public class GesturesActivity extends AppCompatActivity {
         int padding = (int) (8 * density);
 
         for (Gesture gesture : all_gestures) {
-            // Create CardView and set layout parameters for even distribution in a 3-column grid.
             CardView cardView = new CardView(this);
             GridLayout.LayoutParams cardParams = new GridLayout.LayoutParams();
-            cardParams.width = 0; // Weight-based width
+            cardParams.width = 0; // Use weight-based width for equal distribution.
             cardParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             cardParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
             cardView.setLayoutParams(cardParams);
@@ -199,7 +191,6 @@ public class GesturesActivity extends AppCompatActivity {
             cardView.setClickable(true);
             cardView.setFocusable(true);
 
-            // Create a LinearLayout to hold the image and label.
             LinearLayout linearLayout = new LinearLayout(this);
             linearLayout.setOrientation(LinearLayout.VERTICAL);
             linearLayout.setGravity(Gravity.CENTER);
@@ -208,7 +199,6 @@ public class GesturesActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams.MATCH_PARENT, (int) (140 * density));
             linearLayout.setLayoutParams(llParams);
 
-            // Create ImageView for gesture image.
             ImageView imageView = new ImageView(this);
             int imageSize = (int) (80 * density);
             LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(imageSize, imageSize);
@@ -223,7 +213,6 @@ public class GesturesActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            // Create TextView for gesture label.
             TextView textView = new TextView(this);
             LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -232,18 +221,16 @@ public class GesturesActivity extends AppCompatActivity {
             textView.setMaxLines(2);
             textView.setEllipsize(TextUtils.TruncateAt.END);
             textView.setTextSize(16);
+            // Use the active collection name as part of the key.
             String customKey = collectionName + KEY_CUSTOM_PREFIX + gesture.getLabel();
-            String originalMeaning = gesture.getTranslation();
-            String labelText = gesturePrefs.getString(customKey, originalMeaning);
+            String originalGestureMeaning = gesture.getTranslation();
+            String labelText = gesturePrefs.getString(customKey, originalGestureMeaning);
             textView.setText(labelText);
 
-            // Assemble views.
             linearLayout.addView(imageView);
             linearLayout.addView(textView);
             cardView.addView(linearLayout);
-            // Use the gesture label as tag to identify later.
             cardView.setTag(gesture);
-            // Set click listener to open the edit dialog.
             cardView.setOnClickListener(v -> {
                 Gesture clickedGesture = (Gesture) v.getTag();
                 showEditDialog(clickedGesture);
@@ -254,7 +241,7 @@ public class GesturesActivity extends AppCompatActivity {
     }
 
     /**
-     * Opens a dialog to edit the gesture's custom label.
+     * Opens a dialog to edit a gesture's custom label.
      * @param gesture The Gesture object to be edited.
      */
     private void showEditDialog(Gesture gesture) {
@@ -269,7 +256,7 @@ public class GesturesActivity extends AppCompatActivity {
             is.close();
 
             String key = gesture.getLabel();
-            String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + key, gesture.getTranslation());
+            String originalMeaning = gesturePrefs.getString(collectionName + KEY_ORIGINAL_PREFIX + key, gesture.getTranslation());
             String currentLabel = gesturePrefs.getString(collectionName + KEY_CUSTOM_PREFIX + key, originalMeaning);
             dialogInput.setHint("Original: " + originalMeaning);
             dialogInput.setText(currentLabel);
@@ -293,8 +280,8 @@ public class GesturesActivity extends AppCompatActivity {
     }
 
     /**
-     * Resets a specific gesture's custom label back to its original meaning.
-     * @param gestureLabel The unique label of the gesture.
+     * Resets a specific gesture's custom label back to its original meaning for the active collection.
+     * @param gestureLabel The label of the gesture.
      */
     private void resetGesture(String gestureLabel) {
         String originalMeaning = gesturePrefs.getString(collectionName + KEY_ORIGINAL_PREFIX + gestureLabel, gestureLabel);
@@ -304,7 +291,7 @@ public class GesturesActivity extends AppCompatActivity {
     }
 
     /**
-     * Sets up the More Options button to allow for rre esetting all gestures.
+     * Sets up the More Options menu (e.g., for resetting all gestures).
      */
     private void setupMoreOptionsMenu() {
         buttonMoreOptions.setOnClickListener(v -> {
@@ -314,14 +301,14 @@ public class GesturesActivity extends AppCompatActivity {
                         if (which == 0) {
                             resetAllGestures();
                         }
-                        // "Reset Current Gesture" is handled in the edit dialog.
+                        // "Reset Current Gesture" is handled within the edit dialog.
                     })
                     .show();
         });
     }
 
     /**
-     * Resets all gestures back to their original meanings by clearing custom mappings.
+     * Resets all gestures in the active collection back to their original meanings.
      */
     private void resetAllGestures() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -338,5 +325,86 @@ public class GesturesActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    /**
+     * Opens a dialog that lists the existing collections and allows the user to select one or create a new one.
+     */
+    private void showChangeCollectionDialog() {
+        // Retrieve the collections set from SharedPreferences.
+        Set<String> collectionSet = gesturePrefs.getStringSet(KEY_COLLECTION_SET, null);
+        if (collectionSet == null || collectionSet.isEmpty()) {
+            collectionSet = new HashSet<>();
+            collectionSet.add("Default Collection");
+            gesturePrefs.edit().putStringSet(KEY_COLLECTION_SET, collectionSet).apply();
+        }
+        final String[] collections = collectionSet.toArray(new String[0]);
+        int selectedIndex = 0;
+        for (int i = 0; i < collections.length; i++) {
+            if (collections[i].equals(collectionName)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Gesture Collection")
+                .setSingleChoiceItems(collections, selectedIndex, null)
+                .setPositiveButton("Select", (dialog, which) -> {
+                    AlertDialog alertDialog = (AlertDialog) dialog;
+                    int selectedPosition = alertDialog.getListView().getCheckedItemPosition();
+                    String chosenCollection = collections[selectedPosition];
+                    collectionName = chosenCollection;
+                    gesturePrefs.edit().putString("collectionName", collectionName).apply();
+                    textViewCollectionName.setText(collectionName);
+                    // Reinitialize original mappings and update the grid.
+                    initializeOriginalMeanings();
+                    populateGestureGrid();
+                    Toast.makeText(this, "Collection changed to " + collectionName, Toast.LENGTH_SHORT).show();
+                })
+                .setNeutralButton("Create New", (dialog, which) -> {
+                    showCreateNewCollectionDialog();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Opens a dialog for the user to create a new collection with a name and description.
+     */
+    private void showCreateNewCollectionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Create New Collection");
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_collection, null);
+        // Ensure you have created dialog_create_collection.xml with EditTexts having these ids.
+        EditText editTextName = dialogView.findViewById(R.id.editTextCollectionName);
+        EditText editTextDescription = dialogView.findViewById(R.id.editTextCollectionDescription);
+        builder.setView(dialogView);
+        builder.setPositiveButton("Create", (dialog, which) -> {
+            String newCollectionName = editTextName.getText().toString().trim();
+            String newCollectionDescription = editTextDescription.getText().toString().trim();
+            if (!newCollectionName.isEmpty()) {
+                // Add the new collection to the stored set.
+                Set<String> collectionSet = gesturePrefs.getStringSet(KEY_COLLECTION_SET, new HashSet<>());
+                Set<String> newCollectionSet = new HashSet<>(collectionSet);
+                newCollectionSet.add(newCollectionName);
+                gesturePrefs.edit().putStringSet(KEY_COLLECTION_SET, newCollectionSet).apply();
+
+                // Update active collection.
+                collectionName = newCollectionName;
+                collectionDescription = newCollectionDescription.isEmpty() ? "No description" : newCollectionDescription;
+                gesturePrefs.edit().putString("collectionName", collectionName).apply();
+                gesturePrefs.edit().putString("collectionDescription", collectionDescription).apply();
+                textViewCollectionName.setText(collectionName);
+                textViewCollectionDescription.setText(collectionDescription);
+                // Reinitialize original mappings and update the grid.
+                initializeOriginalMeanings();
+                populateGestureGrid();
+                Toast.makeText(this, "New collection " + collectionName + " created", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Collection name cannot be empty", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 }
