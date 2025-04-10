@@ -721,12 +721,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
      * Navigates to the Settings Activity.
      */
     private void navigateToSettingsActivity() {
-        tts.stop();
-        tts.shutdown();
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-        }
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
         finish();
@@ -737,12 +731,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
      * Navigates to the Gestures Activity.
      */
     private void navigateToGesturesActivity() {
-        tts.stop();
-        tts.shutdown();
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-        }
         Intent intent = new Intent(this, GesturesActivity.class);
         startActivity(intent);
         finish();
@@ -753,12 +741,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
      * Navigates to the Learning Activity.
      */
     private void navigateToLearningActivity() {
-        tts.stop();
-        tts.shutdown();
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-        }
         Intent intent = new Intent(this, LearningActivity.class);
         startActivity(intent);
         finish();

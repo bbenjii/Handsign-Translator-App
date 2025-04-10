@@ -9,8 +9,10 @@ import android.content.ServiceConnection;
 import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.speech.tts.TextToSpeech;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
@@ -34,9 +36,10 @@ import com.example.handsign_translator_app.models.Gesture;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
-public class LearningActivity extends AppCompatActivity implements GestureController.GestureListener{
+public class LearningActivity extends AppCompatActivity implements TextToSpeech.OnInitListener, GestureController.GestureListener{
 
     private TextView titleLearning;
     private ImageButton buttonMoreOptions;
@@ -50,6 +53,10 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
     private Boolean frameUp = false;
     private TextView textViewResult;
     private CardView cardViewNextButton;
+    private TextToSpeech tts;
+    private boolean muted = false;
+
+    private MediaPlayer correctSoundPlayer;
 
     private final int correctPanelColor = Color.parseColor("#AED581");
     private final int correctNextButtonColor =  Color.parseColor("#81C784");
@@ -71,6 +78,7 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
     private BluetoothService bluetoothService;
     private boolean isBound = false;
     private BottomNavigationView bottomNavigationView;
+    private Boolean inTransition = false;
 
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -100,14 +108,26 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
     @Override
     public void onGestureDetected(Gesture gesture) {
         runOnUiThread(() -> {
-            Boolean correct = Objects.equals(gesture.getLabel(), instructedGesture.getLabel());
+            if(!inTransition){
+                Boolean correct = Objects.equals(gesture.getLabel(), instructedGesture.getLabel());
 
-            if(correct){
-                correctFrame();
+                if(correct){
+                    correctSoundPlayer.start();
+
+                    inTransition = true;
+                    correctFrame();
+                    // Use a handler to delay 2 seconds before moving on to next gesture
+                    new android.os.Handler().postDelayed(() -> {
+                        nextGesture();
+                        defaultFrame();
+                        return;
+                    }, 3000);
+                }
+                else{
+                    incorrectFrame();
+                }
             }
-            else{
-                incorrectFrame();
-            }
+
 
         });
     }
@@ -170,6 +190,10 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
         textViewInstructions = findViewById(R.id.textViewInstructions);
         textViewInstructedGesture = findViewById(R.id.textViewInstructedGesture);
         buttonSpeaker = findViewById(R.id.button_speaker);
+        buttonSpeaker.setOnClickListener(v -> {
+            String text = textViewInstructedGesture.getText().toString();
+            speak(text);
+        });
 
 
         buttonNextGesture = findViewById(R.id.button_next_gesture);
@@ -177,17 +201,10 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
             nextGesture();
             defaultFrame();
 
-//            if(frameUp){
-//                correctFrame();
-////                slideFrameDown();
-//            }
-//            else{
-//                incorrectFrame();
-////                slideFrameUp();
-//            }
-//            frameUp = !frameUp;
-
         });
+
+//        buttonSpeaker.setEnabled(false);
+        tts = new TextToSpeech(this, this);
 
         frameSlideUp = findViewById(R.id.frame_slide_up);
 
@@ -226,6 +243,9 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
             return false; // Event not handled
         });
 
+        // Initialize MediaPlayer with the sound resource for a correct answer
+        correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound_1);
+
     }
 
     private float dpToPx(int dp){
@@ -237,10 +257,19 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
         );
     }
 
+    /**
+     * Uses the TextToSpeech engine to speak the provided text.
+     */
+    private void speak(String text) {
+        if(muted) return;
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+    }
+
     private void defaultFrame(){
         frameSlideUp.setVisibility(View.GONE);
         cardViewNextButton.setBackgroundTintList(ColorStateList.valueOf(defaultNextButtonColor));
         buttonNextGesture.setText("SKIP");
+        inTransition = false;
     }
 
     private void correctFrame(){
@@ -263,23 +292,10 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
 
     private void slideFrameUp(){
         frameSlideUp.setVisibility(View.VISIBLE);
-
-//        frameSlideUp.setTranslationY(0);
-//        frameSlideUp.animate()
-//                .translationY(0)  // move to original position
-//                .setDuration(50) // 1 second
-//                .start();
     }
 
     private void slideFrameDown(){
         frameSlideUp.setVisibility(View.GONE);
-
-//        frameSlideUp.setTranslationY(dpToPx(100));
-
-//        frameSlideUp.animate()
-//                .translationY(dpToPx(100))  // move to original position
-//                .setDuration(200) // 1 second
-//                .start();
     }
 
     private int getRandomGestureIndex(int length){
@@ -288,11 +304,13 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
         return randomInt;
     }
     private void nextGesture(){
+
         int gestureIndex = getRandomGestureIndex(all_gestures.size());
         instructedGesture = all_gestures.get(gestureIndex);
         textViewInstructedGesture.setText(instructedGesture.getTranslation());
         imageViewUserGesture.setImageDrawable(instructedGesture.getImage());
         gestureController.resetFlexReadingHistory();
+        speak(("" + instructedGesture.getTranslation()));
     }
 
     private void navigateToMainActivity() {
@@ -317,6 +335,32 @@ public class LearningActivity extends AppCompatActivity implements GestureContro
     private void navigateToLearningActivity() {
         Intent intent = new Intent(this, LearningActivity.class);
         startActivity(intent);
+    }
+
+    /**
+     * Called when the TextToSpeech engine is initialized.
+     */
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            // Set TTS language to Canadian English
+            int result = tts.setLanguage(Locale.UK);
+            if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
+                buttonSpeaker.setEnabled(true);
+            }
+        }
+    }
+
+    /**
+     * Ensures proper shutdown of TTS and closing of resources.
+     */
+    @Override
+    protected void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        super.onDestroy();
     }
 
 
