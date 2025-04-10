@@ -65,6 +65,9 @@ public class LogsActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.settings) {
                 navigateToSettingsActivity();
                 return true;
+            } else if (item.getItemId() == R.id.learning) {
+                navigateToLearningActivity();
+                return true;
             }
             return false;
         });
@@ -112,5 +115,14 @@ public class LogsActivity extends AppCompatActivity {
     private void navigateToSettingsActivity() {
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
+    }
+
+    /**
+     * Navigates to the Learning Activity.
+     */
+    private void navigateToLearningActivity() {
+        Intent intent = new Intent(this, LearningActivity.class);
+        startActivity(intent);
+        finish();
     }
 } 
