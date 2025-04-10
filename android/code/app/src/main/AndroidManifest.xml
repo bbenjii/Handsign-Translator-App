@@ -20,6 +20,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Handsign_translator_app"
+
         tools:targetApi="31">
         <service android:name=".BluetoothService"/>
         <activity

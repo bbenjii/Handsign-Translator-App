@@ -15,11 +15,14 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.ServiceConnection;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import java.io.IOException;
@@ -116,10 +119,23 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        applySavedLanguage();
+
+        // Apply saved theme
+        SharedPreferences sharedPreferences = getSharedPreferences("theme_pref", Context.MODE_PRIVATE);
+        boolean nightMode = sharedPreferences.getBoolean("dark_mode", false);
+
+        if (nightMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); //ensures that no dark mode i think? check after:
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -210,6 +226,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     /**
      * Initializes UI elements and sets up components like TTS, Bluetooth, and GestureController.
      */
+    private void applySavedLanguage() {
+        SharedPreferences prefs = getSharedPreferences("language_pref", MODE_PRIVATE);
+        String langCode = prefs.getString("selected_language", "en");
+
+        Locale locale = new Locale(langCode);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.setLocale(locale);
+        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
+    }
     private void setUp() {
         // Link UI components from layout
         titleTranslate = findViewById(R.id.title_translate);
@@ -234,6 +260,18 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             String text = textTranslatedOutput.getText().toString();
             speak(text);
         });
+
+        TextView labelLanguage = findViewById(R.id.label_language);
+
+// Get current locale
+        Locale current = getResources().getConfiguration().locale;
+
+// Set text based on locale
+        if (current.getLanguage().equals("fr")) {
+            labelLanguage.setText(getString(R.string.french));
+        } else {
+            labelLanguage.setText(getString(R.string.English));
+        }
 
         // Initialize TextToSpeech engine
         tts = new TextToSpeech(this, this);
@@ -560,7 +598,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     public void onNoDeviceConnected() {
         setLoadingAnimation();
-        textTranslatedOutput.setText("No device connected...");
+        textTranslatedOutput.setText(getString(R.string.no_device_connected));
     }
 
     /**

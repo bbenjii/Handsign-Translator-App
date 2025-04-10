@@ -5,6 +5,7 @@ import com.example.handsign_translator_app.GestureInfoHelper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -20,6 +21,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class GesturesActivity extends AppCompatActivity {
@@ -51,23 +54,31 @@ public class GesturesActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        applySavedLanguage();
+
+        SharedPreferences sharedPreferences = getSharedPreferences("theme_pref", MODE_PRIVATE);
+        boolean nightMode = sharedPreferences.getBoolean("dark_mode", false);
+
+        if (nightMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_gestures);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        // Initialize SharedPreferences
         gesturePrefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         setUp();
-
-        // Initialize original meanings map
         initializeOriginalMeanings();
-
         loadGestureImages();
         setupClickListeners();
         setupMoreOptionsMenu();
@@ -75,16 +86,14 @@ public class GesturesActivity extends AppCompatActivity {
 
     private void initializeOriginalMeanings() {
         all_gestures = gestureInfoHelper.getGestures();
-
-
         originalMeanings = new HashMap<>();
-        // Store original meanings from CSV
-        for(Gesture gesture : all_gestures){
+
+        for (Gesture gesture : all_gestures) {
             String meaning = gesture.getTranslation();
             originalMeanings.put(gesture.getLabel(), meaning);
 
             String key = KEY_ORIGINAL_PREFIX + gesture.getLabel();
-            if(!gesturePrefs.getString(key, "").equals(meaning)){
+            if (!gesturePrefs.getString(key, "").equals(meaning)) {
                 gesturePrefs.edit().putString(key, meaning).apply();
             }
             if (!gesturePrefs.contains(key)) {
@@ -119,15 +128,13 @@ public class GesturesActivity extends AppCompatActivity {
     private void setupMoreOptionsMenu() {
         buttonMoreOptions.setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Gesture Options")
-                    .setItems(new CharSequence[]{"Reset All to Default", "Reset Current Gesture"}, (dialog, which) -> {
-                        switch (which) {
-                            case 0:
-                                resetAllGestures();
-                                break;
-                            case 1:
-                                // Will be handled in showEditDialog
-                                break;
+            builder.setTitle(getString(R.string.gesture_options_title))
+                    .setItems(new CharSequence[]{
+                            getString(R.string.reset_all_to_default),
+                            getString(R.string.reset_current_gesture)
+                    }, (dialog, which) -> {
+                        if (which == 0) {
+                            resetAllGestures();
                         }
                     })
                     .show();
@@ -136,10 +143,9 @@ public class GesturesActivity extends AppCompatActivity {
 
     private void resetAllGestures() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Reset All Gestures")
-                .setMessage("Are you sure you want to reset all gestures to their original meanings?")
-                .setPositiveButton("Reset", (dialog, which) -> {
-                    // Clear all custom meanings
+        builder.setTitle(getString(R.string.reset_all_gestures_title))
+                .setMessage(getString(R.string.reset_all_gestures_message))
+                .setPositiveButton(getString(R.string.reset), (dialog, which) -> {
                     SharedPreferences.Editor editor = gesturePrefs.edit();
                     for (Gesture gesture : all_gestures) {
                         editor.remove(KEY_CUSTOM_PREFIX + gesture.getLabel());
@@ -148,43 +154,35 @@ public class GesturesActivity extends AppCompatActivity {
                         editor.remove(KEY_CUSTOM_PREFIX + i);
                     }
                     editor.apply();
-
-                    // Reload the UI
                     loadGestureImages();
-                    Toast.makeText(this, "All gestures reset to default", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.gesture_reset_success), Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
     private void resetGesture(int gestureId) {
         String key = gestureId > 0 ? String.valueOf(gestureId) : "y";
         String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + key, key);
-
-        // Remove custom meaning
         gesturePrefs.edit().remove(KEY_CUSTOM_PREFIX + key).apply();
 
-        // Update UI
         TextView labelView = findViewById(gestureId > 0 ?
                 getResources().getIdentifier("gesture_label_" + gestureId, "id", getPackageName()) :
                 R.id.gesture_label_y);
         labelView.setText(originalMeaning);
 
-        Toast.makeText(this, "Gesture reset to default", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.gesture_reset_success), Toast.LENGTH_SHORT).show();
     }
 
     private void setupClickListeners() {
-        // Set up click listeners for each card
         for (int i = 1; i <= 10; i++) {
-            CardView card = findViewById(getResources().getIdentifier(
-                    "gesture_card_" + i, "id", getPackageName()));
+            CardView card = findViewById(getResources().getIdentifier("gesture_card_" + i, "id", getPackageName()));
             final int gestureId = i;
             card.setOnClickListener(v -> showEditDialog(gestureId));
         }
 
-        // Setup Y gesture card click listener
         CardView yCard = findViewById(R.id.gesture_card_y);
-        yCard.setOnClickListener(v -> showEditDialog(-1)); // -1 indicates Y gesture
+        yCard.setOnClickListener(v -> showEditDialog(-1));
     }
 
     private void showEditDialog(int gestureId) {
@@ -203,8 +201,7 @@ public class GesturesActivity extends AppCompatActivity {
 
             if (gestureId > 0) {
                 is = getAssets().open(String.format("hand_signs_images/asl_numbers/%03d.png", gestureId));
-                TextView labelView = findViewById(getResources().getIdentifier(
-                        "gesture_label_" + gestureId, "id", getPackageName()));
+                TextView labelView = findViewById(getResources().getIdentifier("gesture_label_" + gestureId, "id", getPackageName()));
                 currentLabel = labelView.getText().toString();
             } else {
                 is = getAssets().open("hand_signs_images/asl_alphabet/Y.png");
@@ -216,9 +213,8 @@ public class GesturesActivity extends AppCompatActivity {
             dialogImage.setImageBitmap(bitmap);
             is.close();
 
-            // Show original meaning in hint
             String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + key, key);
-            dialogInput.setHint("Original: " + originalMeaning);
+            dialogInput.setHint(getString(R.string.enter_new_meaning) + " (" + originalMeaning + ")");
             dialogInput.setText(currentLabel);
             dialogInput.setSelection(currentLabel.length());
 
@@ -227,23 +223,21 @@ public class GesturesActivity extends AppCompatActivity {
         }
 
         builder.setView(dialogView)
-                .setTitle("Edit Gesture Meaning")
-                .setPositiveButton("Save", (dialog, which) -> {
+                .setTitle(getString(R.string.edit_gesture_title))
+                .setPositiveButton(getString(R.string.save), (dialog, which) -> {
                     String newLabel = dialogInput.getText().toString().trim();
                     if (!newLabel.isEmpty()) {
-                        // Save to SharedPreferences with custom prefix
                         String prefKey = KEY_CUSTOM_PREFIX + (gestureId > 0 ? gestureId : "y");
                         gesturePrefs.edit().putString(prefKey, newLabel).apply();
 
-                        // Update UI
                         TextView labelView = findViewById(gestureId > 0 ?
                                 getResources().getIdentifier("gesture_label_" + gestureId, "id", getPackageName()) :
                                 R.id.gesture_label_y);
                         labelView.setText(newLabel);
                     }
                 })
-                .setNegativeButton("Cancel", null)
-                .setNeutralButton("Reset", (dialog, which) -> resetGesture(gestureId))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setNeutralButton(getString(R.string.reset), (dialog, which) -> resetGesture(gestureId))
                 .show();
     }
 
@@ -271,6 +265,17 @@ public class GesturesActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    private void applySavedLanguage() {
+        SharedPreferences prefs = getSharedPreferences("language_pref", MODE_PRIVATE);
+        String langCode = prefs.getString("selected_language", "en");
+
+        Locale locale = new Locale(langCode);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.setLocale(locale);
+        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
     }
 
     private void navigateToMainActivity() {

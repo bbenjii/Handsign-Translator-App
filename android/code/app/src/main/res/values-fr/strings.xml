@@ -1,0 +1,55 @@
+<resources>
+    <string name="app_name">handsign_traducteur_app</string>
+
+    <!-- Navigation Fragment Labels -->
+    <string name="first_fragment_label">Premier Fragment</string>
+    <string name="second_fragment_label">Deuxième Fragment</string>
+
+    <!-- Navigation Buttons -->
+    <string name="next">Suivant</string>
+    <string name="previous">Précédent</string>
+
+    <!-- Dark Mode -->
+    <string name="dark_mode">Mode Sombre</string>
+    <string name="light_mode">Mode Clair</string>
+
+    <!-- Language Selection -->
+    <string name="language">Langue</string>
+    <string name="select_language">Choisir la langue</string>
+    <string name="english">Anglais</string>
+    <string name="french">Français</string>
+
+    <string name="gesture_options_title">Options de gestes</string>
+    <string name="reset_all_to_default">Réinitialiser tout par défaut</string>
+    <string name="reset_current_gesture">Réinitialiser le geste actuel</string>
+    <string name="reset_all_gestures_title">Réinitialiser tous les gestes</string>
+    <string name="reset_all_gestures_message">Voulez-vous vraiment réinitialiser tous les gestes à leurs significations originales ?</string>
+    <string name="reset">Réinitialiser</string>
+    <string name="cancel">Annuler</string>
+    <string name="gesture_reset_success">Tous les gestes ont été réinitialisés</string>
+    <string name="edit_gesture_title">Modifier la signification du geste</string>
+    <string name="save">Enregistrer</string>
+    <string name="settings">Paramètres</string>
+    <string name="Three">Trois</string>
+    <string name="English">Anglais\n</string>
+    <string name="Hand_Signs">Signes de la main</string>
+    <string name="Signs">Signes de la main</string>
+    <string name="Translate">Traduire</string>
+    <string name="no_device_connected">Aucun appareil connecté...</string>
+    <string name="CustomGesture">Geste personnalisé</string>
+    <string name="bluetooth_connection">Connexion Bluetooth</string>
+    <string name="Mute">Muet / Son activé</string>
+    <string name="Bluetooth_devices">Appareils Bluetooth</string>
+    <string name="Paired_devices">Appareils jumelés</string>
+    <string name="Available_devices">Appareils disponibles</string>
+    <string name="Discover">Rechercher</string>
+    <string name="enter_new_meaning">Entrez une nouvelle signification</string>
+    <string name="Test_BT">Tester BT</string>
+    <string name="gestures_title">Gestes</string>
+    <string name="settings_title">Paramètres</string>
+    <string name="translation_title">Traduction</string>
+
+
+    <!-- Demo Paragraph (French Placeholder) -->
+
+</resources>

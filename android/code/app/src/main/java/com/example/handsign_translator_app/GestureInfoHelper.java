@@ -34,33 +34,35 @@ private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
         gestures = new ArrayList<>();
         gesturePrefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
-        // CSV file name and delimiter definition
-        String csvFile = "gesture_info.csv";
-        String line;
-        String delimiter = ", ";
+        String english_file = "gesture_info.csv";
+        String french_file = "gesture_info_fr.csv";
 
-        String[] labels = {};
-        Map<String, String> map;
+
+        SharedPreferences prefs = context.getSharedPreferences("language_pref", MODE_PRIVATE);
+        String langCode = prefs.getString("selected_language", "en");
+
+        String csvFile = english_file;
+        if (langCode.equals("fr")) {
+            csvFile = french_file;
+        }
+
         try {
             // Open the CSV file from assets as an InputStream
             InputStream inputStream = assetManager.open(csvFile);
             // Wrap the InputStream in a BufferedReader for easier line-by-line reading
             BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 
-            // Read the header line to get the column labels
-            line = br.readLine();
-            labels = line.split(delimiter);
+            String line = br.readLine(); // header line
+            String[] labels = line.split(",\\s*"); // handles comma and optional space
 
-            // Loop through each subsequent line in the CSV file
+            String[] values;
             while ((line = br.readLine()) != null) {
-                // Split the line into individual field values using the delimiter
-                String[] values = line.split(delimiter);
-                map = new HashMap<String, String>();
-                // Map each label to its corresponding value from the current line
+                values = line.split(",\\s*");
+                Map<String, String> map = new HashMap<>();
                 for (int i = 0; i < labels.length; i++) {
                     map.put(labels[i], values[i]);
                 }
-                // Retrieve and trim the translation and image path from the map
+
                 String translation = map.get("translation").trim();
                 String imagePath = map.get("path").trim();
                 String label = map.get("label").trim();
@@ -74,9 +76,9 @@ private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
                 // Create a new Gesture object and add it to the list
                 gestures.add(new Gesture(translation, imagePath, label, customTranslation, image));
             }
-        }
-        catch(IOException e) {
-            // Print stack trace for any IO exception encountered during file reading
+
+            br.close();
+        } catch (IOException e) {
             e.printStackTrace();
             return;
         }
