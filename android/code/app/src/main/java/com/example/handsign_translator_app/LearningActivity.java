@@ -107,6 +107,8 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
      */
     @Override
     public void onGestureDetected(Gesture gesture) {
+        buttonNextGesture.setEnabled(true);
+
         runOnUiThread(() -> {
             if(!inTransition){
                 Boolean correct = Objects.equals(gesture.getLabel(), instructedGesture.getLabel());
@@ -146,15 +148,31 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
      */
     @Override
     public void onTranslationInProgress() {
-        // Update UI with loading animation and message
-//        setLoadingAnimation();
-//        textTranslatedOutput.setText("Translating...");
+        buttonNextGesture.setEnabled(true);
+        defaultFrame();
     }
 
     @Override
     public void onNoDeviceConnected() {
-//        setLoadingAnimation();
-//        textTranslatedOutput.setText("No device connected...");
+        runOnUiThread(() -> {
+            // Show the slide-up frame with a warning color (example: amber/yellow)
+//            frameSlideUp.setVisibility(View.VISIBLE);
+//            frameSlideUp.setBackgroundColor(Color.parseColor("#FFCC00")); // Yellow, indicating caution
+//
+//            // Update the result text to inform the user about the missing connection
+//            textViewResult.setText("No device connected.");
+//
+//            // Update the Next button text to "CONNECT" so the user understands they need to reconnect
+            buttonNextGesture.setText("No device connected...");
+            buttonNextGesture.setEnabled(false);
+//            cardViewNextButton.setVisibility(View.GONE);
+
+            // Optionally, set an onClickListener on the Next button to navigate to your BT connection screen or retry connection
+//            buttonNextGesture.setOnClickListener(v -> {
+//                // For example, navigate to an activity that lists available Bluetooth devices
+//                navigateToBluetoothConnectionScreen();
+//            });
+        });
     }
 
 
@@ -180,6 +198,13 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
         startService(serviceIntent); // This makes the service live beyond activity binding.
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(serviceConnection);
+        isBound = false;
     }
 
 
@@ -268,6 +293,7 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
 
     private void defaultFrame(){
         frameSlideUp.setVisibility(View.GONE);
+        cardViewNextButton.setVisibility(View.VISIBLE);
         cardViewNextButton.setBackgroundTintList(ColorStateList.valueOf(defaultNextButtonColor));
         buttonNextGesture.setText("SKIP");
         inTransition = false;

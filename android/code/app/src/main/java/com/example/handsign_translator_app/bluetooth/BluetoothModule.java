@@ -25,6 +25,7 @@ public class BluetoothModule {
     private Context context;
     // Latest data read from the Bluetooth socket (volatile for thread-safety)
     private volatile String latestData = "";
+    private boolean connected = true;
     private Thread dataThread;
     private boolean keepReading = false;
 
@@ -34,6 +35,8 @@ public class BluetoothModule {
     }
 
     public boolean isDeviceConnected(){
+//        return connected;
+//        return true;
         return (bluetoothSocket != null);
     }
 
@@ -175,18 +178,19 @@ public class BluetoothModule {
         return sensorValues;
     }
 
+
     /**
      * Provides simulated sensor data.
      */
     private int[] getMockReadings() {
-        int finger1 = randomNumber(0,180);
-        int finger2 = randomNumber(0,180);
-        int finger3 = randomNumber(0,180);
-        int finger4 = randomNumber(0,180);
-        int finger5 = randomNumber(0,180);
-//        return new int[]{finger1, finger2, finger3, finger4, finger5};
 
-        return new int[]{180,113,0,0,19};
+        Toast.makeText(context, "Device Disconnected", Toast.LENGTH_SHORT).show();
+
+//        connected = false;
+        bluetoothSocket = null;
+        return new int[]{};
+
+//        return new int[]{180,113,0,0,19};
     }
 
     /**

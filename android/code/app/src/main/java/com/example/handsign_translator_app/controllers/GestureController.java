@@ -91,7 +91,7 @@ public class GestureController {
             if (!running) return;  // 👈 Prevent execution if stopped
 
             boolean deviceConnected = bluetoothModule.isDeviceConnected();
-            deviceConnected = true;
+//            deviceConnected = true;
             if (deviceConnected){
 
                 // Retrieve the latest sensor data from the Bluetooth module
