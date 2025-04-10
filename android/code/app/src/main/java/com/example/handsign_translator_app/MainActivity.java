@@ -156,8 +156,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         bluetoothModule = new BluetoothModule(getApplicationContext());
         assetManager = getApplicationContext().getAssets();
         gestureClassifier = new GestureClassifier(assetManager, getApplicationContext());
-        // Pass this activity as the GestureListener so that callbacks can update the UI
-        gestureController = new GestureController(bluetoothModule, gestureClassifier, this);
+        // Pass this activity as the GestureListener and context so that callbacks can update the UI
+        gestureController = new GestureController(bluetoothModule, gestureClassifier, this, getApplicationContext());
 
         // Set up bottom navigation view for activity navigation
         bottomNavigationView = findViewById(R.id.bottomNavigationView);

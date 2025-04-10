@@ -4,14 +4,18 @@
 
     <item
         android:id="@+id/translation"
-        android:icon="@drawable/translation_icon"
-        android:title="Translation" />
+        android:icon="@drawable/translate_logo"
+        android:title="Translate" />
     <item
         android:id="@+id/gestures"
-        android:icon="@drawable/gesture_icon"
+        android:icon="@drawable/gesture_logo"
         android:title="Gestures" />
     <item
+        android:id="@+id/logs"
+        android:icon="@drawable/history_logo"
+        android:title="Logs" />
+    <item
         android:id="@+id/settings"
-        android:icon="@drawable/settings_icon"
+        android:icon="@drawable/settings_logo"
         android:title="Settings" />
 </menu>
