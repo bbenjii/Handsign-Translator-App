@@ -15,6 +15,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
@@ -34,6 +35,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -51,7 +54,14 @@ public class GesturesActivity extends AppCompatActivity {
     private AssetManager assetManager;
     private Map<String, String> originalMeanings;
     private static final String PREFS_NAME = "gesture_mappings";
-    private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
+    private String collectionName = "defaultfafasd";
+    private String collectionDescription = "Default gesture collectionasfasfsadf.";
+
+    private TextView textViewCollectionName;
+    private Button buttonChangeCollection;
+    private TextView textViewCollectionDescription;
+
+    private static final String KEY_CUSTOM_PREFIX = "_custom_gesture_";
     private static final String KEY_ORIGINAL_PREFIX = "original_gesture_";
 
     @Override
@@ -86,6 +96,27 @@ public class GesturesActivity extends AppCompatActivity {
         assetManager = getApplicationContext().getAssets();
         gestureInfoHelper = new GestureInfoHelper(assetManager, getApplicationContext());
 
+        if (gesturePrefs.contains("collectionName")) {
+            gesturePrefs.edit().putString("collectionName", "Default Collection").apply();
+        }
+
+        if (!gesturePrefs.contains("collectionDescription")) {
+            gesturePrefs.edit().putString("collectionDescription", "Default gesture collection.").apply();
+        }
+
+        collectionName = gesturePrefs.getString("collectionName", "default");
+        collectionDescription = gesturePrefs.getString("collectionDescription", "Default gesture collection.");
+
+        textViewCollectionDescription = findViewById(R.id.textViewCollectionDescription);
+        textViewCollectionName = findViewById(R.id.textViewCollectionName);
+
+        textViewCollectionName.setText(collectionName);
+        textViewCollectionDescription.setText(collectionDescription);
+
+        buttonChangeCollection = findViewById(R.id.buttonChangeCollection);
+
+
+
         bottomNavigationView.setSelectedItemId(R.id.gestures);
         bottomNavigationView.setItemActiveIndicatorColor(
                 ContextCompat.getColorStateList(this, R.color.blue_gray_100));
@@ -102,6 +133,7 @@ public class GesturesActivity extends AppCompatActivity {
                 return true;
             }
             return false;
+
         });
     }
 
@@ -136,7 +168,7 @@ public class GesturesActivity extends AppCompatActivity {
         for (Gesture gesture : all_gestures) {
             String meaning = gesture.getTranslation();
             originalMeanings.put(gesture.getLabel(), meaning);
-            String key = KEY_ORIGINAL_PREFIX + gesture.getLabel();
+            String key = collectionName + KEY_ORIGINAL_PREFIX + gesture.getLabel();
             // If the original is not stored or differs, store it.
             if (!gesturePrefs.contains(key) || !gesturePrefs.getString(key, "").equals(meaning)) {
                 gesturePrefs.edit().putString(key, meaning).apply();
@@ -200,7 +232,7 @@ public class GesturesActivity extends AppCompatActivity {
             textView.setMaxLines(2);
             textView.setEllipsize(TextUtils.TruncateAt.END);
             textView.setTextSize(16);
-            String customKey = KEY_CUSTOM_PREFIX + gesture.getLabel();
+            String customKey = collectionName + KEY_CUSTOM_PREFIX + gesture.getLabel();
             String originalMeaning = gesture.getTranslation();
             String labelText = gesturePrefs.getString(customKey, originalMeaning);
             textView.setText(labelText);
@@ -238,7 +270,7 @@ public class GesturesActivity extends AppCompatActivity {
 
             String key = gesture.getLabel();
             String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + key, gesture.getTranslation());
-            String currentLabel = gesturePrefs.getString(KEY_CUSTOM_PREFIX + key, originalMeaning);
+            String currentLabel = gesturePrefs.getString(collectionName + KEY_CUSTOM_PREFIX + key, originalMeaning);
             dialogInput.setHint("Original: " + originalMeaning);
             dialogInput.setText(currentLabel);
             dialogInput.setSelection(currentLabel.length());
@@ -250,7 +282,7 @@ public class GesturesActivity extends AppCompatActivity {
                 .setPositiveButton("Save", (dialog, which) -> {
                     String newLabel = dialogInput.getText().toString().trim();
                     if (!newLabel.isEmpty()) {
-                        String prefKey = KEY_CUSTOM_PREFIX + gesture.getLabel();
+                        String prefKey = collectionName + KEY_CUSTOM_PREFIX + gesture.getLabel();
                         gesturePrefs.edit().putString(prefKey, newLabel).apply();
                         populateGestureGrid();
                     }
@@ -265,14 +297,14 @@ public class GesturesActivity extends AppCompatActivity {
      * @param gestureLabel The unique label of the gesture.
      */
     private void resetGesture(String gestureLabel) {
-        String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + gestureLabel, gestureLabel);
-        gesturePrefs.edit().remove(KEY_CUSTOM_PREFIX + gestureLabel).apply();
+        String originalMeaning = gesturePrefs.getString(collectionName + KEY_ORIGINAL_PREFIX + gestureLabel, gestureLabel);
+        gesturePrefs.edit().remove(collectionName + KEY_CUSTOM_PREFIX + gestureLabel).apply();
         populateGestureGrid();
         Toast.makeText(this, "Gesture reset to default", Toast.LENGTH_SHORT).show();
     }
 
     /**
-     * Sets up the More Options button to allow for resetting all gestures.
+     * Sets up the More Options button to allow for rre esetting all gestures.
      */
     private void setupMoreOptionsMenu() {
         buttonMoreOptions.setOnClickListener(v -> {
@@ -298,7 +330,7 @@ public class GesturesActivity extends AppCompatActivity {
                 .setPositiveButton("Reset", (dialog, which) -> {
                     SharedPreferences.Editor editor = gesturePrefs.edit();
                     for (Gesture gesture : all_gestures) {
-                        editor.remove(KEY_CUSTOM_PREFIX + gesture.getLabel());
+                        editor.remove(collectionName + KEY_CUSTOM_PREFIX + gesture.getLabel());
                     }
                     editor.apply();
                     populateGestureGrid();

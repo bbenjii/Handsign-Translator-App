@@ -41,6 +41,53 @@
     </LinearLayout>
 
     <!-- Scrollable Gesture Grid -->
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_layout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textViewCollectionName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="COLLECTION 1: HOSPITAL" />
+
+            <Button
+                android:id="@+id/buttonChangeCollection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="30dp"
+                android:text="change"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Description"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textViewCollectionDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="This is the default Set." />
+
+    </LinearLayout>
+
     <androidx.core.widget.NestedScrollView
         android:id="@+id/gesture_scroll"
         android:layout_width="match_parent"
@@ -50,7 +97,7 @@
         app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/header_layout">
+        app:layout_constraintTop_toBottomOf="@id/linearLayout">
 
         <GridLayout
             android:id="@+id/gesture_grid"
@@ -456,7 +503,6 @@
             </androidx.cardview.widget.CardView>
 
 
-
             <!-- Gesture I -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/gesture_card_i"
@@ -474,17 +520,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_i"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture I"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture I"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_i"
@@ -492,7 +538,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="I"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -513,17 +559,17 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
+                    android:padding="8dp">
 
                     <ImageView
                         android:id="@+id/gesture_image_l"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
+                        android:contentDescription="Gesture L"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/placeholder"
-                        android:contentDescription="Gesture L"/>
+                        android:src="@drawable/placeholder" />
 
                     <TextView
                         android:id="@+id/gesture_label_l"
@@ -531,7 +577,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="L"
-                        android:textAlignment="center"/>
+                        android:textAlignment="center" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
