@@ -102,8 +102,7 @@
                 android:id="@+id/imageViewUserGesture"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="centerInside"
-                app:srcCompat="@drawable/loading_icon" />
+                android:scaleType="centerInside" />
         </androidx.cardview.widget.CardView>
 
         <FrameLayout

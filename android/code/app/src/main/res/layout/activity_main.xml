@@ -130,7 +130,7 @@
                 android:id="@+id/text_translated_output"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Three"
+                android:text="No device connected..."
                 android:textAlignment="viewStart"
                 android:textSize="24sp"
                 android:textStyle="bold" />
