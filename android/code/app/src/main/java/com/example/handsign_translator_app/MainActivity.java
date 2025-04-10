@@ -195,8 +195,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             gestureController.stop();
 //            gestureController.setGestureListener(null);
         }
-
-
     }
 
     @Override

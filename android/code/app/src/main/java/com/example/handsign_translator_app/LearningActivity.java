@@ -134,6 +134,27 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
         });
     }
 
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Stop gesture detection when activity is paused
+
+        muted = true;
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        if (gestureClassifier != null) {
+            gestureClassifier.close();
+        }
+
+        if (gestureController != null) {
+            gestureController.stop();
+//            gestureController.setGestureListener(null);
+        }
+    }
+
     @Override
     public void rawDataOutput(String data) {
         // Update UI with loading animation and message

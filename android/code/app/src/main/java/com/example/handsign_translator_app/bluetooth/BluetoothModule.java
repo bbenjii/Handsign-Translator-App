@@ -187,10 +187,10 @@ public class BluetoothModule {
         Toast.makeText(context, "Device Disconnected", Toast.LENGTH_SHORT).show();
 
 //        connected = false;
-//        bluetoothSocket = null;
-//        return new int[]{};
+        bluetoothSocket = null;
+        return new int[]{};
 
-        return new int[]{180,113,0,0,19};
+//        return new int[]{180,113,0,0,19};
     }
 
     /**
