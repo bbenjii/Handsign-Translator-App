@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -183,6 +184,7 @@ public class GesturesActivity extends AppCompatActivity {
             cardView.setUseCompatPadding(true);
             cardView.setClickable(true);
             cardView.setFocusable(true);
+            cardView.setCardBackgroundColor(Color.parseColor("#FFFFFF"));
 
             LinearLayout linearLayout = new LinearLayout(this);
             linearLayout.setOrientation(LinearLayout.VERTICAL);
