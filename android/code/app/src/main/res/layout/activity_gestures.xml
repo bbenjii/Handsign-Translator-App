@@ -455,6 +455,86 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+
+
+            <!-- Gesture I -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/gesture_card_i"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:layout_gravity="fill"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/gesture_image_i"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/placeholder"
+                        android:contentDescription="Gesture I"/>
+
+                    <TextView
+                        android:id="@+id/gesture_label_i"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="I"
+                        android:textAlignment="center"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Gesture L -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/gesture_card_l"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:layout_gravity="fill"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/gesture_image_l"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/placeholder"
+                        android:contentDescription="Gesture L"/>
+
+                    <TextView
+                        android:id="@+id/gesture_label_l"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="L"
+                        android:textAlignment="center"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <!-- Gesture Y -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/gesture_card_y"

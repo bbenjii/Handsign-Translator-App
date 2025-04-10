@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/translation"
         android:icon="@drawable/translation_icon"
-        android:title="Translation" />
+        android:title="@string/translation_title" />
     <item
         android:id="@+id/gestures"
         android:icon="@drawable/gesture_icon"
-        android:title="Gestures" />
+        android:title="@string/gestures_title"/>
+    <item
+        android:id="@+id/learning"
+        android:icon="@drawable/learning_icon"
+        android:title="Learn" />
     <item
         android:id="@+id/settings"
         android:icon="@drawable/settings_icon"
-        android:title="Settings" />
+        android:title="@string/settings_title" />
 </menu>

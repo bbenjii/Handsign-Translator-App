@@ -1,7 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Handsign_translator_app" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
+    <style name="Theme.MyApp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/blue_gray_500</item>
+        <item name="colorPrimaryVariant">@color/blue_gray_900</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorBackground">#000000</item>
+        <item name="android:textColor">#FFFFFF</item>
     </style>
 </resources>
