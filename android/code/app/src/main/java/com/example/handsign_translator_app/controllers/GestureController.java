@@ -81,7 +81,7 @@ public class GestureController {
         @Override
         public void run() {
             if(bluetoothModule.isDeviceConnected()){
-                String data = bluetoothModule.getLatestData();
+                String data = bluetoothModule.getRawData();
                 if(data.isEmpty()){
                     listener.onTranslationInProgress();
                 }

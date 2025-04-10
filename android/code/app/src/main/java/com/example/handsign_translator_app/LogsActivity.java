@@ -53,7 +53,6 @@ public class LogsActivity extends AppCompatActivity {
         buttonMoreOptions.setOnClickListener(v -> showOptionsDialog());
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
-        bottomNavigationView.setSelectedItemId(R.id.logs);
         bottomNavigationView.setItemActiveIndicatorColor(ContextCompat.getColorStateList(this, R.color.blue_gray_100));
 
         bottomNavigationView.setOnItemSelectedListener(item -> {

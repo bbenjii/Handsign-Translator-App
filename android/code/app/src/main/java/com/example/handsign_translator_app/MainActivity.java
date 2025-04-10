@@ -134,6 +134,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         buttonHistory = findViewById(R.id.button_history);
         buttonMoreOptions = findViewById(R.id.button_more_options);
 
+        // Add history button click listener
+        buttonHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, LogsActivity.class);
+            startActivity(intent);
+        });
+
         popUpBT();
 
         buttonSpeaker = findViewById(R.id.button_speaker);
