@@ -27,6 +27,8 @@ public class GestureController {
     private GestureListener listener;
     // Stores the currently detected gesture (if any)
     public Gesture currentGesture;
+    private boolean running = false;
+
 
     /**
      * Interface definition for callbacks to be invoked when a gesture is detected
@@ -57,15 +59,22 @@ public class GestureController {
      * Starts the periodic reading of sensor data.
      */
     public void start() {
-        handler.post(runnable);
+        if (!running) {
+            running = true;
+            handler.post(runnable);
+        }
     }
-
     /**
      * Stops the periodic reading of sensor data.
      */
+
     public void stop() {
+        running = false;
         handler.removeCallbacks(runnable);
+        listener = null;
     }
+
+
 
     /**
      * Runnable that reads sensor data, checks for gesture stability, and triggers classification.
@@ -73,6 +82,8 @@ public class GestureController {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
+            if (!running) return;  // 👈 Prevent execution if stopped
+
             boolean deviceConnected = bluetoothModule.isDeviceConnected();
 //            deviceConnected = true;
             if (deviceConnected){
@@ -118,7 +129,10 @@ public class GestureController {
             }
 
             // Schedule the next sensor reading after the specified delay
-            handler.postDelayed(this, SENSOR_READ_DELAY_MS);
+            // Only schedule the next run if still running
+            if (running) {
+                handler.postDelayed(this, SENSOR_READ_DELAY_MS);
+            }
         }
     };
 
@@ -131,5 +145,9 @@ public class GestureController {
             floatArray[i] = intArray[i];
         }
         return floatArray;
+    }
+
+    public void resetFlexReadingHistory(){
+        flexReadingsHistory = new ArrayDeque<>();
     }
 }

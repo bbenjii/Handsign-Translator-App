@@ -68,9 +68,11 @@ private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
                 String customKey = KEY_CUSTOM_PREFIX + label;
                 String customTranslation = gesturePrefs.getString(customKey, "");
 
+                InputStream ims = assetManager.open(imagePath);
+                Drawable image = Drawable.createFromStream(ims, null);
 
                 // Create a new Gesture object and add it to the list
-                gestures.add(new Gesture(translation, imagePath, label, customTranslation));
+                gestures.add(new Gesture(translation, imagePath, label, customTranslation, image));
             }
         }
         catch(IOException e) {
