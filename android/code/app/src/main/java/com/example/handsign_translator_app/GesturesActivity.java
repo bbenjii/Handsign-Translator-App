@@ -1,41 +1,43 @@
 package com.example.handsign_translator_app;
 
+import com.example.handsign_translator_app.models.Gesture;
 import com.example.handsign_translator_app.GestureInfoHelper;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.handsign_translator_app.models.Gesture;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class GesturesActivity extends AppCompatActivity {
@@ -45,8 +47,8 @@ public class GesturesActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private SharedPreferences gesturePrefs;
     private GestureInfoHelper gestureInfoHelper;
-    List<Gesture> all_gestures;
-    AssetManager assetManager;
+    private List<Gesture> all_gestures;
+    private AssetManager assetManager;
     private Map<String, String> originalMeanings;
     private static final String PREFS_NAME = "gesture_mappings";
     private static final String KEY_CUSTOM_PREFIX = "custom_gesture_";
@@ -54,203 +56,39 @@ public class GesturesActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        applySavedLanguage();
-
-        SharedPreferences sharedPreferences = getSharedPreferences("theme_pref", MODE_PRIVATE);
-        boolean nightMode = sharedPreferences.getBoolean("dark_mode", false);
-
-        if (nightMode) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        }
-
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_gestures);
-
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
+        // Initialize SharedPreferences
         gesturePrefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         setUp();
+        // Populate the gestures list and store original meanings.
         initializeOriginalMeanings();
-        loadGestureImages();
-        setupClickListeners();
+        // Build the grid dynamically.
+        populateGestureGrid();
         setupMoreOptionsMenu();
     }
 
-    private void initializeOriginalMeanings() {
-        all_gestures = gestureInfoHelper.getGestures();
-        originalMeanings = new HashMap<>();
-
-        for (Gesture gesture : all_gestures) {
-            String meaning = gesture.getTranslation();
-            originalMeanings.put(gesture.getLabel(), meaning);
-
-            String key = KEY_ORIGINAL_PREFIX + gesture.getLabel();
-            if (!gesturePrefs.getString(key, "").equals(meaning)) {
-                gesturePrefs.edit().putString(key, meaning).apply();
-            }
-            if (!gesturePrefs.contains(key)) {
-                gesturePrefs.edit().putString(key, meaning).apply();
-            }
-        }
-    }
-
-    private void loadGestureImages() {
-        try {
-            for (Gesture gesture : all_gestures) {
-//                String path = gesture.getImagePath();
-//                InputStream ims = assetManager.open(path);
-//                Drawable d = Drawable.createFromStream(ims, null);
-
-                ImageView imageView = findViewById(getResources().getIdentifier("gesture_image_" + gesture.getLabel(), "id", getPackageName()));
-                imageView.setImageDrawable(gesture.getImage());
-
-                TextView labelView = findViewById(getResources().getIdentifier("gesture_label_" + gesture.getLabel(), "id", getPackageName()));
-                String customKey = KEY_CUSTOM_PREFIX + gesture.getLabel();
-
-                String originalMeaning = gesture.getTranslation();
-                String customMeaning = gesturePrefs.getString(customKey, originalMeaning);
-                labelView.setText(customMeaning);
-            }
-
-        } catch  (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void setupMoreOptionsMenu() {
-        buttonMoreOptions.setOnClickListener(v -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(getString(R.string.gesture_options_title))
-                    .setItems(new CharSequence[]{
-                            getString(R.string.reset_all_to_default),
-                            getString(R.string.reset_current_gesture)
-                    }, (dialog, which) -> {
-                        if (which == 0) {
-                            resetAllGestures();
-                        }
-                    })
-                    .show();
-        });
-    }
-
-    private void resetAllGestures() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getString(R.string.reset_all_gestures_title))
-                .setMessage(getString(R.string.reset_all_gestures_message))
-                .setPositiveButton(getString(R.string.reset), (dialog, which) -> {
-                    SharedPreferences.Editor editor = gesturePrefs.edit();
-                    for (Gesture gesture : all_gestures) {
-                        editor.remove(KEY_CUSTOM_PREFIX + gesture.getLabel());
-                    }
-                    for (int i = 1; i <= 10; i++) {
-                        editor.remove(KEY_CUSTOM_PREFIX + i);
-                    }
-                    editor.apply();
-                    loadGestureImages();
-                    Toast.makeText(this, getString(R.string.gesture_reset_success), Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton(getString(R.string.cancel), null)
-                .show();
-    }
-
-    private void resetGesture(int gestureId) {
-        String key = gestureId > 0 ? String.valueOf(gestureId) : "y";
-        String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + key, key);
-        gesturePrefs.edit().remove(KEY_CUSTOM_PREFIX + key).apply();
-
-        TextView labelView = findViewById(gestureId > 0 ?
-                getResources().getIdentifier("gesture_label_" + gestureId, "id", getPackageName()) :
-                R.id.gesture_label_y);
-        labelView.setText(originalMeaning);
-
-        Toast.makeText(this, getString(R.string.gesture_reset_success), Toast.LENGTH_SHORT).show();
-    }
-
-    private void setupClickListeners() {
-        for (int i = 1; i <= 10; i++) {
-            CardView card = findViewById(getResources().getIdentifier("gesture_card_" + i, "id", getPackageName()));
-            final int gestureId = i;
-            card.setOnClickListener(v -> showEditDialog(gestureId));
-        }
-
-        CardView yCard = findViewById(R.id.gesture_card_y);
-        yCard.setOnClickListener(v -> showEditDialog(-1));
-    }
-
-    private void showEditDialog(int gestureId) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_gesture, null);
-
-        // Find views in dialog
-        ImageView dialogImage = dialogView.findViewById(R.id.dialog_gesture_image);
-        EditText dialogInput = dialogView.findViewById(R.id.dialog_input);
-
-        // Set current image and text
-        try {
-            InputStream is;
-            String currentLabel;
-            String key = gestureId > 0 ? String.valueOf(gestureId) : "y";
-
-            if (gestureId > 0) {
-                is = getAssets().open(String.format("hand_signs_images/asl_numbers/%03d.png", gestureId));
-                TextView labelView = findViewById(getResources().getIdentifier("gesture_label_" + gestureId, "id", getPackageName()));
-                currentLabel = labelView.getText().toString();
-            } else {
-                is = getAssets().open("hand_signs_images/asl_alphabet/Y.png");
-                TextView labelView = findViewById(R.id.gesture_label_y);
-                currentLabel = labelView.getText().toString();
-            }
-
-            Bitmap bitmap = BitmapFactory.decodeStream(is);
-            dialogImage.setImageBitmap(bitmap);
-            is.close();
-
-            String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + key, key);
-            dialogInput.setHint(getString(R.string.enter_new_meaning) + " (" + originalMeaning + ")");
-            dialogInput.setText(currentLabel);
-            dialogInput.setSelection(currentLabel.length());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        builder.setView(dialogView)
-                .setTitle(getString(R.string.edit_gesture_title))
-                .setPositiveButton(getString(R.string.save), (dialog, which) -> {
-                    String newLabel = dialogInput.getText().toString().trim();
-                    if (!newLabel.isEmpty()) {
-                        String prefKey = KEY_CUSTOM_PREFIX + (gestureId > 0 ? gestureId : "y");
-                        gesturePrefs.edit().putString(prefKey, newLabel).apply();
-
-                        TextView labelView = findViewById(gestureId > 0 ?
-                                getResources().getIdentifier("gesture_label_" + gestureId, "id", getPackageName()) :
-                                R.id.gesture_label_y);
-                        labelView.setText(newLabel);
-                    }
-                })
-                .setNegativeButton(getString(R.string.cancel), null)
-                .setNeutralButton(getString(R.string.reset), (dialog, which) -> resetGesture(gestureId))
-                .show();
-    }
-
+    /**
+     * Initialize view references, assetManager, and gestureInfoHelper; also set up bottom navigation.
+     */
     private void setUp() {
         titleGestures = findViewById(R.id.title_settings);
         buttonMoreOptions = findViewById(R.id.button_more_options);
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
-
         assetManager = getApplicationContext().getAssets();
         gestureInfoHelper = new GestureInfoHelper(assetManager, getApplicationContext());
 
         bottomNavigationView.setSelectedItemId(R.id.gestures);
-        bottomNavigationView.setItemActiveIndicatorColor(ContextCompat.getColorStateList(this, R.color.blue_gray_100));
+        bottomNavigationView.setItemActiveIndicatorColor(
+                ContextCompat.getColorStateList(this, R.color.blue_gray_100));
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.translation) {
@@ -259,23 +97,9 @@ public class GesturesActivity extends AppCompatActivity {
             } else if (item.getItemId() == R.id.settings) {
                 navigateToSettingsActivity();
                 return true;
-            } else if (item.getItemId() == R.id.learning) {
-                navigateToLearningActivity();
-                return true;
             }
             return false;
         });
-    }
-
-    private void applySavedLanguage() {
-        SharedPreferences prefs = getSharedPreferences("language_pref", MODE_PRIVATE);
-        String langCode = prefs.getString("selected_language", "en");
-
-        Locale locale = new Locale(langCode);
-        Locale.setDefault(locale);
-        Configuration config = new Configuration();
-        config.setLocale(locale);
-        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
     }
 
     private void navigateToMainActivity() {
@@ -289,10 +113,183 @@ public class GesturesActivity extends AppCompatActivity {
     }
 
     /**
-     * Navigates to the Learning Activity.
+     * Load the gestures from the helper and store their original meanings into SharedPreferences.
      */
-    private void navigateToLearningActivity() {
-        Intent intent = new Intent(this, LearningActivity.class);
-        startActivity(intent);
+    private void initializeOriginalMeanings() {
+        all_gestures = gestureInfoHelper.getGestures();
+        originalMeanings = new HashMap<>();
+        for (Gesture gesture : all_gestures) {
+            String meaning = gesture.getTranslation();
+            originalMeanings.put(gesture.getLabel(), meaning);
+            String key = KEY_ORIGINAL_PREFIX + gesture.getLabel();
+            // If the original is not stored or differs, store it.
+            if (!gesturePrefs.contains(key) || !gesturePrefs.getString(key, "").equals(meaning)) {
+                gesturePrefs.edit().putString(key, meaning).apply();
+            }
+        }
+    }
+
+    /**
+     * Dynamically builds the GridLayout with gesture cards based on the list of gestures.
+     */
+    private void populateGestureGrid() {
+        GridLayout gridLayout = findViewById(R.id.gesture_grid);
+        gridLayout.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+        int padding = (int) (8 * density);
+
+        for (Gesture gesture : all_gestures) {
+            // Create CardView and set layout parameters for even distribution in a 3-column grid.
+            CardView cardView = new CardView(this);
+            GridLayout.LayoutParams cardParams = new GridLayout.LayoutParams();
+            cardParams.width = 0; // Weight-based width
+            cardParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            cardParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            cardView.setLayoutParams(cardParams);
+            cardView.setRadius(8 * density);
+            cardView.setCardElevation(2 * density);
+            cardView.setUseCompatPadding(true);
+            cardView.setClickable(true);
+            cardView.setFocusable(true);
+
+            // Create a LinearLayout to hold the image and label.
+            LinearLayout linearLayout = new LinearLayout(this);
+            linearLayout.setOrientation(LinearLayout.VERTICAL);
+            linearLayout.setGravity(Gravity.CENTER);
+            linearLayout.setPadding(padding, padding, padding, padding);
+            LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, (int) (140 * density));
+            linearLayout.setLayoutParams(llParams);
+
+            // Create ImageView for gesture image.
+            ImageView imageView = new ImageView(this);
+            int imageSize = (int) (80 * density);
+            LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(imageSize, imageSize);
+            imageView.setLayoutParams(imageParams);
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            try {
+                InputStream ims = assetManager.open(gesture.getImagePath());
+                Drawable drawable = Drawable.createFromStream(ims, null);
+                imageView.setImageDrawable(drawable);
+                ims.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Create TextView for gesture label.
+            TextView textView = new TextView(this);
+            LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            textView.setLayoutParams(textParams);
+            textView.setGravity(Gravity.CENTER);
+            textView.setMaxLines(2);
+            textView.setEllipsize(TextUtils.TruncateAt.END);
+            textView.setTextSize(16);
+            String customKey = KEY_CUSTOM_PREFIX + gesture.getLabel();
+            String originalMeaning = gesture.getTranslation();
+            String labelText = gesturePrefs.getString(customKey, originalMeaning);
+            textView.setText(labelText);
+
+            // Assemble views.
+            linearLayout.addView(imageView);
+            linearLayout.addView(textView);
+            cardView.addView(linearLayout);
+            // Use the gesture label as tag to identify later.
+            cardView.setTag(gesture);
+            // Set click listener to open the edit dialog.
+            cardView.setOnClickListener(v -> {
+                Gesture clickedGesture = (Gesture) v.getTag();
+                showEditDialog(clickedGesture);
+            });
+
+            gridLayout.addView(cardView);
+        }
+    }
+
+    /**
+     * Opens a dialog to edit the gesture's custom label.
+     * @param gesture The Gesture object to be edited.
+     */
+    private void showEditDialog(Gesture gesture) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_gesture, null);
+        ImageView dialogImage = dialogView.findViewById(R.id.dialog_gesture_image);
+        EditText dialogInput = dialogView.findViewById(R.id.dialog_input);
+        try {
+            InputStream is = getAssets().open(gesture.getImagePath());
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            dialogImage.setImageBitmap(bitmap);
+            is.close();
+
+            String key = gesture.getLabel();
+            String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + key, gesture.getTranslation());
+            String currentLabel = gesturePrefs.getString(KEY_CUSTOM_PREFIX + key, originalMeaning);
+            dialogInput.setHint("Original: " + originalMeaning);
+            dialogInput.setText(currentLabel);
+            dialogInput.setSelection(currentLabel.length());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        builder.setView(dialogView)
+                .setTitle("Edit Gesture Meaning")
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newLabel = dialogInput.getText().toString().trim();
+                    if (!newLabel.isEmpty()) {
+                        String prefKey = KEY_CUSTOM_PREFIX + gesture.getLabel();
+                        gesturePrefs.edit().putString(prefKey, newLabel).apply();
+                        populateGestureGrid();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Reset", (dialog, which) -> resetGesture(gesture.getLabel()))
+                .show();
+    }
+
+    /**
+     * Resets a specific gesture's custom label back to its original meaning.
+     * @param gestureLabel The unique label of the gesture.
+     */
+    private void resetGesture(String gestureLabel) {
+        String originalMeaning = gesturePrefs.getString(KEY_ORIGINAL_PREFIX + gestureLabel, gestureLabel);
+        gesturePrefs.edit().remove(KEY_CUSTOM_PREFIX + gestureLabel).apply();
+        populateGestureGrid();
+        Toast.makeText(this, "Gesture reset to default", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Sets up the More Options button to allow for resetting all gestures.
+     */
+    private void setupMoreOptionsMenu() {
+        buttonMoreOptions.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Gesture Options")
+                    .setItems(new CharSequence[]{"Reset All to Default", "Reset Current Gesture"}, (dialog, which) -> {
+                        if (which == 0) {
+                            resetAllGestures();
+                        }
+                        // "Reset Current Gesture" is handled in the edit dialog.
+                    })
+                    .show();
+        });
+    }
+
+    /**
+     * Resets all gestures back to their original meanings by clearing custom mappings.
+     */
+    private void resetAllGestures() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Reset All Gestures")
+                .setMessage("Are you sure you want to reset all gestures to their original meanings?")
+                .setPositiveButton("Reset", (dialog, which) -> {
+                    SharedPreferences.Editor editor = gesturePrefs.edit();
+                    for (Gesture gesture : all_gestures) {
+                        editor.remove(KEY_CUSTOM_PREFIX + gesture.getLabel());
+                    }
+                    editor.apply();
+                    populateGestureGrid();
+                    Toast.makeText(this, "All gestures reset to default", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }
