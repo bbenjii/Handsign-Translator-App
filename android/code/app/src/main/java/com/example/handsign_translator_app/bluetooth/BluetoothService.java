@@ -1,11 +1,9 @@
-package com.example.handsign_translator_app;
+package com.example.handsign_translator_app.bluetooth;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-
-import com.example.handsign_translator_app.bluetooth.BluetoothModule;
 
 public class BluetoothService extends Service {
     private final IBinder binder = new LocalBinder();

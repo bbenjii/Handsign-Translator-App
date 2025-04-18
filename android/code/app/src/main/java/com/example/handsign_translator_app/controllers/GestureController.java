@@ -38,9 +38,6 @@ public class GestureController {
     /**
      * Interface definition for callbacks to be invoked when a gesture is detected
      * or when translation is in progress.
-     *
-     * Additionally, you might consider adding a callback like onSensorDataReceived(int[] data)
-     * if you want to update the UI or log raw sensor data.
      */
     public interface GestureListener {
         void onGestureDetected(Gesture gesture);

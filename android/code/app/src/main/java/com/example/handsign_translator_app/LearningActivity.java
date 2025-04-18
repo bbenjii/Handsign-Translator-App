@@ -1,7 +1,5 @@
 package com.example.handsign_translator_app;
 
-import static android.view.View.INVISIBLE;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +28,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
+import com.example.handsign_translator_app.bluetooth.BluetoothService;
 import com.example.handsign_translator_app.controllers.GestureController;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
 import com.example.handsign_translator_app.models.Gesture;
@@ -176,23 +175,8 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
     @Override
     public void onNoDeviceConnected() {
         runOnUiThread(() -> {
-            // Show the slide-up frame with a warning color (example: amber/yellow)
-//            frameSlideUp.setVisibility(View.VISIBLE);
-//            frameSlideUp.setBackgroundColor(Color.parseColor("#FFCC00")); // Yellow, indicating caution
-//
-//            // Update the result text to inform the user about the missing connection
-//            textViewResult.setText("No device connected.");
-//
-//            // Update the Next button text to "CONNECT" so the user understands they need to reconnect
             buttonNextGesture.setText("No device connected...");
             buttonNextGesture.setEnabled(false);
-//            cardViewNextButton.setVisibility(View.GONE);
-
-            // Optionally, set an onClickListener on the Next button to navigate to your BT connection screen or retry connection
-//            buttonNextGesture.setOnClickListener(v -> {
-//                // For example, navigate to an activity that lists available Bluetooth devices
-//                navigateToBluetoothConnectionScreen();
-//            });
         });
     }
 
@@ -249,7 +233,6 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
 
         });
 
-//        buttonSpeaker.setEnabled(false);
         tts = new TextToSpeech(this, this);
 
         frameSlideUp = findViewById(R.id.frame_slide_up);
@@ -289,9 +272,7 @@ public class LearningActivity extends AppCompatActivity implements TextToSpeech.
             return false; // Event not handled
         });
 
-        // Initialize MediaPlayer with the sound resource for a correct answer
         correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound_1);
-//        correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound);
 
     }
 

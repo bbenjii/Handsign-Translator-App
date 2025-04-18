@@ -2,16 +2,13 @@ package com.example.handsign_translator_app;
 
 // Import necessary packages and classes
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.*;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -27,13 +24,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import java.io.IOException;
 
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
@@ -58,10 +51,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.handsign_translator_app.bluetooth.BluetoothModule;
+import com.example.handsign_translator_app.bluetooth.BluetoothService;
 import com.example.handsign_translator_app.controllers.GestureController;
 import com.example.handsign_translator_app.database.GestureLogDbHelper;
 import com.example.handsign_translator_app.ml_module.GestureClassifier;
-import com.example.handsign_translator_app.ml_module.GestureStabilityChecker;
 import com.example.handsign_translator_app.models.Gesture;
 import com.example.handsign_translator_app.models.GestureLog;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -146,14 +139,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             return insets;
         });
 
-//        super.onStart();
-        // Start and bind to the service.
-//        Intent serviceIntent = new Intent(this, BluetoothService.class);
-//        startService(serviceIntent); // This makes the service live beyond activity binding.
-//        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-
-//        setUp();
-
     }
 
 
@@ -172,9 +157,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onResume() {
         super.onResume();
-//        if (gestureController != null) {
-//            gestureController.start();
-//        }
     }
 
     @Override
@@ -193,7 +175,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         if (gestureController != null) {
             gestureController.stop();
-//            gestureController.setGestureListener(null);
         }
     }
 
