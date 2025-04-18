@@ -153,11 +153,19 @@ def plot_diagram():
 
 if __name__ == '__main__':
     # First train model
-    trainModel()
+    # trainModel()
+
+
+    # label_encoder = joblib.load("model_files/label_encoder.pkl")
+    # print(list(label_encoder.classes_))
 
     #then convert to tflite
-    convert_to_tflite()
+    # convert_to_tflite()
+    # import joblib
 
-    # sample_reading = [0, 0, 0, 0, 0]  # Replace with real sensor values
-    # predicted_gesture = predict_gesture(sample_reading)
-    # print(f"Predicted Gesture: {predicted_gesture}")
+
+    sample_reading = [0,0,180,166,180]  # Replace with real sensor values
+    predicted_gesture = predict_gesture(sample_reading)
+    print(f"Predicted Gesture: {predicted_gesture}")
+
+    pass
