@@ -112,12 +112,6 @@ def trainModel():
 def predict_gesture(current_flex_readings):
     """
     Predicts the gesture based on current flex sensor readings.
-
-    Args:
-        current_flex_readings (list): A list of 4 flex sensor values [THUMB, INDEX, MIDDLE, RING]
-
-    Returns:
-        str: The predicted gesture label.
     """
 
     # Load saved model, label encoder, and scaler
@@ -139,33 +133,21 @@ def predict_gesture(current_flex_readings):
 
     return predicted_label
 
-def plot_diagram():
-
-    df = pd.read_csv('static_gesture_data.csv')
-    df.plot()
-    plt.show()
-
-# plot_diagram()
-
-
-# print(label_encoder.classes_)
-# trainModel()
 
 if __name__ == '__main__':
     # First train model
-    # trainModel()
+    trainModel()
 
 
     # label_encoder = joblib.load("model_files/label_encoder.pkl")
     # print(list(label_encoder.classes_))
 
     #then convert to tflite
-    # convert_to_tflite()
-    # import joblib
+    convert_to_tflite()
 
-
-    sample_reading = [0,0,180,166,180]  # Replace with real sensor values
-    predicted_gesture = predict_gesture(sample_reading)
-    print(f"Predicted Gesture: {predicted_gesture}")
+    # test
+    # sample_reading = [0,0,180,166,180]  # Replace with real sensor values
+    # predicted_gesture = predict_gesture(sample_reading)
+    # print(f"Predicted Gesture: {predicted_gesture}")
 
     pass
