@@ -4,13 +4,6 @@
 
 The **Sign Language Translator Glove** is an innovative project aimed at bridging the communication gap between Deaf or hard-of-hearing individuals and non-signers by translating sign language gestures into text and speech in real-time. The system combines wearable technology embedded with flex sensors, Bluetooth connectivity, and machine learning (ML) to facilitate intuitive and dynamic communication.
 
-## Team Members
-- Yousef Abuelnaga
-- Benjamin Ollomo
-- Ireoluwa Onamusi
-- Gunkeet Mutiana
-- Yassine Eddoughmi
-
 ## Project Description
 
 The glove integrates flex sensors that capture precise movements of fingers and hands. An ESP32 microcontroller processes these sensor readings, transmitting data wirelessly via Bluetooth to an Android mobile application. A machine learning model then classifies the gestures and provides real-time translation in the form of on-screen text or audible speech.
